@@ -1,1 +1,1 @@
-Js.log("Hello");
+let double = x => x * 2;

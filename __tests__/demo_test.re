@@ -1,16 +1,11 @@
 open Jest;
+open Expect;
+open! Expect.Operators;
 
-describe("Expect", () =>
-  Expect.(test("toBe", () =>
-            expect(1 + 2) |> toBe(3)
-          ))
+describe("Demo", () =>
+  describe("double", () =>
+    test("5", () =>
+      expect(Demo.double(5)) === 10
+    )
+  )
 );
-
-describe("Expect.Operators", () => {
-  open Expect;
-  open! Expect.Operators;
-
-  test("==", () =>
-    expect(1 + 2) === 3
-  );
-});
