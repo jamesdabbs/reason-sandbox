@@ -3,9 +3,16 @@ open Expect;
 open! Expect.Operators;
 
 describe("Demo", () =>
-  describe("double", () =>
-    test("5", () =>
-      expect(Demo.double(5)) === 10
-    )
-  )
+  describe("parse_rom(nestest.nes)", () => {
+    let path = "/data/src/reason/sandbox/__tests__/roms/nestest.nes";
+    let result = Demo.parse_rom(path);
+
+    test("pathname", () =>
+      expect(result.pathname) === path
+    );
+
+    test("prg_size", () =>
+      expect(result.prg_size) === 1
+    );
+  })
 );
