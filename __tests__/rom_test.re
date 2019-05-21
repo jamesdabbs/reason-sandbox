@@ -20,9 +20,14 @@ describe("Demo", () =>
       test("pathname", () =>
         expect(rom.pathname) === rom_path("aorom")
       );
-      // test("mapper", () => {
-      //   expect(rom.mapper) === Unknown
-      // });
+
+      test("mapper_id", () => 
+        expect(rom.mapper_id) === 10
+      );
+
+      test("mapper", () => {
+        expect(rom.mapper) === Unknown
+      });
     });
 
     describe("nestest", () => {
@@ -50,6 +55,10 @@ describe("Demo", () =>
 
       test("mirroring", () =>
         expect(rom.mirroring) === Horizontal
+      );
+
+      test("mapper_id", () => 
+        expect(rom.mapper_id) === 0
       );
 
       test("mapper", () =>
