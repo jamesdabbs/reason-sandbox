@@ -20,7 +20,7 @@ type rom = {
   chr_count: int,
   mirroring,
   mapper_id: int,
-  mapper
+  mapper,
 };
 
 let check_header = (rom: bytes) => {
@@ -29,28 +29,29 @@ let check_header = (rom: bytes) => {
   if (Bytes.to_string(header) !== "NES\x1A") {
     failwith("Malformed header");
   };
-}
+};
 
 let parse = (path: string): rom => {
   let contents = Bytes.of_string(Node.Fs.readFileSync(path, `binary));
-  let byte_at = (bytes, index) => Char.code(Bytes.get(bytes, index));
+  let byte_at = index => Char.code(Bytes.get(contents, index));
   check_header(contents);
 
-  let prg_count = byte_at(contents, 4);
-  let chr_count = byte_at(contents, 5);
+  let prg_count = byte_at(4);
+  let chr_count = byte_at(5);
 
   let prg_size = 0x4000 * prg_count;
   let chr_size = 0x2000 * chr_count;
 
-  let flag6 = byte_at(contents, 6);
-  let flag7 = byte_at(contents, 7);
+  let flag6 = byte_at(6);
+  let flag7 = byte_at(7);
   let mirroring = flag6 land 0x1 == 0 ? Horizontal : Vertical;
 
   let prg = Bytes.sub(contents, 16, prg_size);
   let chr = Bytes.sub(contents, 16 + prg_size, chr_size);
 
-  let mapper_id = flag6 lsr 4 + (flag7 land 0x10);
-  let mapper = switch(mapper_id) {
+  let mapper_id = flag6 lsr 4 + flag7 land 0x10;
+  let mapper =
+    switch (mapper_id) {
     | 0 => NROM
     | 1 => MMC1
     | 2 => UNROM
@@ -69,6 +70,6 @@ let parse = (path: string): rom => {
     chr_count,
     mirroring,
     mapper_id,
-    mapper
+    mapper,
   };
 };
