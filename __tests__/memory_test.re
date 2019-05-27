@@ -29,15 +29,21 @@ describe("Memory", () => {
   });
 
   test("it can read from the cartridge", () =>
-    expect(Memory.get_byte(memory, 0x4020))
+    expect(Memory.get_byte(memory, 0x8000))
     == Char.code(Bytes.get(rom.prg, 0))
   );
 
   test("it cannot set to the cartridge", () => {
     let old = Bytes.copy(memory.ram);
 
-    Memory.set_byte(memory, 0x4020, 13);
+    Memory.set_byte(memory, 0x8000, 13);
 
     expect(memory.ram) == old;
+  });
+
+  test("it can fetch a word", () => {
+    let word = Memory.get_word(memory, 0xfffc);
+
+    expect(word) == 0xc004;
   });
 });
