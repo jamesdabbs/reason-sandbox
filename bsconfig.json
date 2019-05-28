@@ -16,7 +16,9 @@
     "in-source": true
   },
   "suffix": ".bs.js",
-  "bs-dependencies": [],
+  "bs-dependencies": [
+    "@glennsl/bs-json"
+  ],
   "bs-dev-dependencies": [
     "@glennsl/bs-jest"
   ],

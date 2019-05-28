@@ -1,0 +1,1260 @@
+[
+  {
+    "label": "adc",
+    "description": "Add with Carry",
+    "opcodes": [
+      {
+        "code": 97,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "indirectX"
+      },
+      {
+        "code": 101,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 105,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "immediate"
+      },
+      {
+        "code": 109,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 113,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "indirectY"
+      },
+      {
+        "code": 117,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 121,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteY"
+      },
+      {
+        "code": 125,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "and",
+    "description": "And with Accumulator",
+    "opcodes": [
+      {
+        "code": 33,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "indirectX"
+      },
+      {
+        "code": 37,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 41,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "immediate"
+      },
+      {
+        "code": 45,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 49,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "indirectY"
+      },
+      {
+        "code": 53,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 57,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteY"
+      },
+      {
+        "code": 61,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "asl",
+    "description": "Arithmetic Shift Left",
+    "opcodes": [
+      {
+        "code": 6,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 10,
+        "length": 1,
+        "timing": 2,
+        "addressing_mode": "accumulator"
+      },
+      {
+        "code": 14,
+        "length": 3,
+        "timing": 6,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 22,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 30,
+        "length": 3,
+        "timing": 7,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "readModifyWrite"
+  },
+  {
+    "label": "bit",
+    "description": "Test Bits with Accumulator",
+    "opcodes": [
+      {
+        "code": 36,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 44,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "cmp",
+    "description": "Compare with Accumulator",
+    "opcodes": [
+      {
+        "code": 193,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "indirectX"
+      },
+      {
+        "code": 197,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 201,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "immediate"
+      },
+      {
+        "code": 205,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 209,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "indirectY"
+      },
+      {
+        "code": 213,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 217,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteY"
+      },
+      {
+        "code": 221,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "cpx",
+    "description": "Compare with X Register",
+    "opcodes": [
+      {
+        "code": 224,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "immediate"
+      },
+      {
+        "code": 228,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 236,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "cpy",
+    "description": "Compare with Y Register",
+    "opcodes": [
+      {
+        "code": 192,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "immediate"
+      },
+      {
+        "code": 196,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 204,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "dec",
+    "description": "Decrement Memory",
+    "opcodes": [
+      {
+        "code": 198,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 206,
+        "length": 3,
+        "timing": 6,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 214,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 222,
+        "length": 3,
+        "timing": 7,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "readModifyWrite"
+  },
+  {
+    "label": "eor",
+    "description": "Exclusive OR with Accumulator",
+    "opcodes": [
+      {
+        "code": 65,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "indirectX"
+      },
+      {
+        "code": 69,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 73,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "immediate"
+      },
+      {
+        "code": 77,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 81,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "indirectY"
+      },
+      {
+        "code": 85,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 89,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteY"
+      },
+      {
+        "code": 93,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "inc",
+    "description": "Increment Memory",
+    "opcodes": [
+      {
+        "code": 230,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 238,
+        "length": 3,
+        "timing": 6,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 246,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 254,
+        "length": 3,
+        "timing": 7,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "readModifyWrite"
+  },
+  {
+    "label": "lda",
+    "description": "Load into Accumulator",
+    "opcodes": [
+      {
+        "code": 161,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "indirectX"
+      },
+      {
+        "code": 165,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 169,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "immediate"
+      },
+      {
+        "code": 173,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 177,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "indirectY"
+      },
+      {
+        "code": 181,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 185,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteY"
+      },
+      {
+        "code": 189,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "ldx",
+    "description": "Load into X Register",
+    "opcodes": [
+      {
+        "code": 162,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "immediate"
+      },
+      {
+        "code": 166,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 174,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 182,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageY"
+      },
+      {
+        "code": 190,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteY"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "ldy",
+    "description": "Load into Y Register",
+    "opcodes": [
+      {
+        "code": 160,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "immediate"
+      },
+      {
+        "code": 164,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 172,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 188,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteX"
+      },
+      {
+        "code": 180,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageX"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "lsr",
+    "description": "Logical Shift Right",
+    "opcodes": [
+      {
+        "code": 70,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 74,
+        "length": 1,
+        "timing": 2,
+        "addressing_mode": "accumulator"
+      },
+      {
+        "code": 78,
+        "length": 3,
+        "timing": 6,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 86,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 94,
+        "length": 3,
+        "timing": 7,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "readModifyWrite"
+  },
+  {
+    "label": "ora",
+    "description": "Inclusive OR with Accumulator",
+    "opcodes": [
+      {
+        "code": 1,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "indirectX"
+      },
+      {
+        "code": 5,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 9,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "immediate"
+      },
+      {
+        "code": 13,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 17,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "indirectY"
+      },
+      {
+        "code": 21,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 25,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteY"
+      },
+      {
+        "code": 29,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "rol",
+    "description": "Rotate Left",
+    "opcodes": [
+      {
+        "code": 42,
+        "length": 1,
+        "timing": 2,
+        "addressing_mode": "accumulator"
+      },
+      {
+        "code": 38,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 46,
+        "length": 3,
+        "timing": 6,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 54,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 62,
+        "length": 3,
+        "timing": 7,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "readModifyWrite"
+  },
+  {
+    "label": "ror",
+    "description": "Rotate Right",
+    "opcodes": [
+      {
+        "code": 102,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 106,
+        "length": 1,
+        "timing": 2,
+        "addressing_mode": "accumulator"
+      },
+      {
+        "code": 110,
+        "length": 3,
+        "timing": 6,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 118,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 126,
+        "length": 3,
+        "timing": 7,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "readModifyWrite"
+  },
+  {
+    "label": "sbc",
+    "description": "Subtract with Carry",
+    "opcodes": [
+      {
+        "code": 225,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "indirectX"
+      },
+      {
+        "code": 229,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 233,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "immediate"
+      },
+      {
+        "code": 237,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 241,
+        "length": 2,
+        "timing": 5,
+        "addressing_mode": "indirectY"
+      },
+      {
+        "code": 245,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 249,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteY"
+      },
+      {
+        "code": 253,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "read"
+  },
+  {
+    "label": "sta",
+    "description": "Store Accumulator",
+    "opcodes": [
+      {
+        "code": 129,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "indirectX"
+      },
+      {
+        "code": 133,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 141,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 145,
+        "length": 2,
+        "timing": 6,
+        "addressing_mode": "indirectY"
+      },
+      {
+        "code": 149,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageX"
+      },
+      {
+        "code": 153,
+        "length": 3,
+        "timing": 5,
+        "addressing_mode": "absoluteY"
+      },
+      {
+        "code": 157,
+        "length": 3,
+        "timing": 5,
+        "addressing_mode": "absoluteX"
+      }
+    ],
+    "access_pattern": "write"
+  },
+  {
+    "label": "stx",
+    "description": "Store X Register",
+    "opcodes": [
+      {
+        "code": 134,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 142,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 150,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageY"
+      }
+    ],
+    "access_pattern": "write"
+  },
+  {
+    "label": "sty",
+    "description": "Store Y Register",
+    "opcodes": [
+      {
+        "code": 132,
+        "length": 2,
+        "timing": 3,
+        "addressing_mode": "zeroPage"
+      },
+      {
+        "code": 140,
+        "length": 3,
+        "timing": 4,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 148,
+        "length": 2,
+        "timing": 4,
+        "addressing_mode": "zeroPageX"
+      }
+    ],
+    "access_pattern": "write"
+  },
+  {
+    "label": "bcc",
+    "description": "Branch on Carry Clear",
+    "opcodes": [
+      {
+        "code": 144,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "relative"
+      }
+    ],
+    "access_pattern": "jump",
+    "skip_pc": true
+  },
+  {
+    "label": "bcs",
+    "description": "Branch on Carry Set",
+    "opcodes": [
+      {
+        "code": 176,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "relative"
+      }
+    ],
+    "access_pattern": "jump",
+    "skip_pc": true
+  },
+  {
+    "label": "beq",
+    "description": "Branch on Equal",
+    "opcodes": [
+      {
+        "code": 240,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "relative"
+      }
+    ],
+    "access_pattern": "jump",
+    "skip_pc": true
+  },
+  {
+    "label": "bmi",
+    "description": "Branch on Minus (negative)",
+    "opcodes": [
+      {
+        "code": 48,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "relative"
+      }
+    ],
+    "access_pattern": "jump",
+    "skip_pc": true
+  },
+  {
+    "label": "bne",
+    "description": "Branch on Not Equal",
+    "opcodes": [
+      {
+        "code": 208,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "relative"
+      }
+    ],
+    "access_pattern": "jump",
+    "skip_pc": true
+  },
+  {
+    "label": "bpl",
+    "description": "Branch on Plus (positive)",
+    "opcodes": [
+      {
+        "code": 16,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "relative"
+      }
+    ],
+    "access_pattern": "jump",
+    "skip_pc": true
+  },
+  {
+    "label": "bvc",
+    "description": "Branch on Overflow Clear",
+    "opcodes": [
+      {
+        "code": 80,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "relative"
+      }
+    ],
+    "access_pattern": "jump",
+    "skip_pc": true
+  },
+  {
+    "label": "bvs",
+    "description": "Branch on Overflow Set",
+    "opcodes": [
+      {
+        "code": 112,
+        "length": 2,
+        "timing": 2,
+        "addressing_mode": "relative"
+      }
+    ],
+    "access_pattern": "jump",
+    "skip_pc": true
+  },
+  {
+    "label": "jmp",
+    "description": "Jump Unconditional",
+    "opcodes": [
+      {
+        "code": 76,
+        "length": 3,
+        "timing": 3,
+        "addressing_mode": "absolute"
+      },
+      {
+        "code": 108,
+        "length": 3,
+        "timing": 5,
+        "addressing_mode": "indirect"
+      }
+    ],
+    "access_pattern": "jump",
+    "skip_pc": true
+  },
+  {
+    "label": "jsr",
+    "description": "Jump Subroutine",
+    "opcodes": [
+      {
+        "code": 32,
+        "length": 3,
+        "timing": 6,
+        "addressing_mode": "absolute"
+      }
+    ],
+    "access_pattern": "jump",
+    "skip_pc": true
+  },
+  {
+    "label": "clc",
+    "description": "Clear Carry Flag",
+    "opcodes": [
+      {
+        "code": 24,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "cld",
+    "description": "Clear Decimal Flag",
+    "opcodes": [
+      {
+        "code": 216,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "cli",
+    "description": "Clear Interrupt Flag",
+    "opcodes": [
+      {
+        "code": 88,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "clv",
+    "description": "Clear Overflow Flag",
+    "opcodes": [
+      {
+        "code": 184,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "sec",
+    "description": "Set Carry Flag",
+    "opcodes": [
+      {
+        "code": 56,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "sed",
+    "description": "Set Decimal Flag",
+    "opcodes": [
+      {
+        "code": 248,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "sei",
+    "description": "Set Interrupt Flag",
+    "opcodes": [
+      {
+        "code": 120,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "pha",
+    "description": "Push Accumulator",
+    "opcodes": [
+      {
+        "code": 72,
+        "length": 1,
+        "timing": 3
+      }
+    ]
+  },
+  {
+    "label": "php",
+    "description": "Push Status",
+    "opcodes": [
+      {
+        "code": 8,
+        "length": 1,
+        "timing": 3
+      }
+    ]
+  },
+  {
+    "label": "pla",
+    "description": "Pull Accumulator",
+    "opcodes": [
+      {
+        "code": 104,
+        "length": 1,
+        "timing": 4
+      }
+    ]
+  },
+  {
+    "label": "plp",
+    "description": "Pull Status",
+    "opcodes": [
+      {
+        "code": 40,
+        "length": 1,
+        "timing": 4
+      }
+    ]
+  },
+  {
+    "label": "tax",
+    "description": "Transfer Accumulator -> X",
+    "opcodes": [
+      {
+        "code": 170,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "tay",
+    "description": "Transfer Accumulator -> Y",
+    "opcodes": [
+      {
+        "code": 168,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "tsx",
+    "description": "Transfer Stack Pointer -> X",
+    "opcodes": [
+      {
+        "code": 186,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "txa",
+    "description": "Transfer X -> Accumulator",
+    "opcodes": [
+      {
+        "code": 138,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "txs",
+    "description": "Transfer X -> Stack Pointer",
+    "opcodes": [
+      {
+        "code": 154,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "tya",
+    "description": "Transfer Y -> Accumulator",
+    "opcodes": [
+      {
+        "code": 152,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "brk",
+    "description": "Break",
+    "opcodes": [
+      {
+        "code": 0,
+        "length": 1,
+        "timing": 7
+      }
+    ]
+  },
+  {
+    "label": "dex",
+    "description": "Decrement X",
+    "opcodes": [
+      {
+        "code": 202,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "dey",
+    "description": "Decrement Y",
+    "opcodes": [
+      {
+        "code": 136,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "inx",
+    "description": "Increment X",
+    "opcodes": [
+      {
+        "code": 232,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "iny",
+    "description": "Increment Y",
+    "opcodes": [
+      {
+        "code": 200,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "nop",
+    "description": "No Operation",
+    "opcodes": [
+      {
+        "code": 234,
+        "length": 1,
+        "timing": 2
+      }
+    ]
+  },
+  {
+    "label": "rti",
+    "description": "Return from Interrupt",
+    "opcodes": [
+      {
+        "code": 64,
+        "length": 1,
+        "timing": 6
+      }
+    ]
+  },
+  {
+    "label": "rts",
+    "description": "Return from Subroutine",
+    "opcodes": [
+      {
+        "code": 96,
+        "length": 1,
+        "timing": 6
+      }
+    ]
+  }
+]
