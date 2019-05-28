@@ -22,17 +22,18 @@ describe("Disassemble", () => {
 
   test("it can run", () => {
     let expected = {j|
-8000 4C F5 C5 ;; JMP
-8003 60       ;; RTS
-8004 78       ;; SEI
-8005 D8       ;; CLD
-8006 A2 FF    ;; LDX
-8008 9A       ;; TXS
-8009 AD 02 20 ;; LDA
-800C 10 FB    ;; BPL
-800E AD 02 20 ;; LDA
-8011 10 FB    ;; BPL
+C000 4C F5 C5 ;; JMP
+C003 60       ;; RTS
+C004 78       ;; SEI
+C005 D8       ;; CLD
+C006 A2 FF    ;; LDX
+C008 9A       ;; TXS
+C009 AD 02 20 ;; LDA
+C00C 10 FB    ;; BPL
+C00E AD 02 20 ;; LDA
+C011 10 FB    ;; BPL
 |j};
-    expect(String.trim(disassemble(0x8000, 10))) == String.trim(expected);
+
+    expect(String.trim(disassemble(0xC000, 10))) == String.trim(expected);
   });
 });
