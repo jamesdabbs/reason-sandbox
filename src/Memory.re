@@ -1,7 +1,9 @@
-type memory = {
+type t = {
   ram: bytes,
   rom: Rom.rom,
 };
+
+type memory = t;
 
 let build = (rom: Rom.rom): memory => {
   {ram: Bytes.make(0x800, Char.chr(0)), rom};
