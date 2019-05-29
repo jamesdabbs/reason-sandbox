@@ -30,6 +30,11 @@ let reset = cpu => {
   cpu.pc = Memory.get_word(cpu.memory, cpu.pc);
 };
 
+let debug_log = cpu => {
+  Printf.sprintf("%04X A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%i",
+  cpu.pc, cpu.acc, cpu.x, cpu.y, cpu.status, cpu.stack, cpu.cycles);
+};
+
 exception InstructionNotImplemented(int);
 
 let jump = cpu => {
