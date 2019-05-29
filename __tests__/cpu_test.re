@@ -64,8 +64,20 @@ describe("CPU", () => {
   });
 
   describe("nestest", () => {
+    let instrs = Instruction.load(expandPath("../src/instructions.json"));
+    let disasm = Disassemble.make(instrs, memory);
     let cpu = Cpu.copy(initial);
     cpu.pc = 0xc000;
+
+    let trace = (line) => {
+      let dis = disasm(cpu.pc, 1)
+      let actual = Cpu.debug_log(cpu)
+      Js.log({j|
+        Expected: $line
+        Actual: $actual
+        Disassembly: $dis
+      |j});
+    }
 
     test("runs legal opcodes successfully", () => {
       let path = expandPath("./roms/nestest.log");
@@ -76,7 +88,7 @@ describe("CPU", () => {
       let logs_match = (cpu, line) => Cpu.debug_log(cpu) == lines[line]
 
       while (cpu.pc != 0xc6bd && logs_match(cpu, count^)) {
-        // Js.log(lines[count^])
+        // trace(lines[count^]);
         Cpu.step(cpu);
         count := count^ + 1;
       };

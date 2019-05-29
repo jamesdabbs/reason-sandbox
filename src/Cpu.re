@@ -50,6 +50,4 @@ let step = cpu => {
   | 0x4c => jump(cpu)
   | _ => raise(InstructionNotImplemented(instruction))
   };
-
-  cpu;
 };
