@@ -83,17 +83,24 @@ describe("CPU", () => {
       let path = expandPath("./roms/nestest.log");
       let log = Node.Fs.readFileSync(path, `utf8);
       let lines = Js.String.split("\n", log);
-      let finished = "C6BD A:AA X:97 Y:4E P:EF SP:F9 CYC:14572";
+      let target = "C5F5"
+      let log_at = (line) => Js.String2.startsWith(line, target);
+      let target_log = switch (Js.Array.find(log_at, lines)) {
+      | None => ""
+      | Some(value) => value
+      }
+
       let count = ref(0);
+      let cpu_at = (target) => cpu.pc == int_of_string("0x" ++ target);
       let logs_match = (cpu, line) => Cpu.debug_log(cpu) == lines[line]
 
-      while (cpu.pc != 0xc6bd && logs_match(cpu, count^)) {
-        // trace(lines[count^]);
+      while (!cpu_at(target) && logs_match(cpu, count^)) {
+        trace(lines[count^]);
         Cpu.step(cpu);
         count := count^ + 1;
       };
 
-      expect(Cpu.debug_log(cpu)) |> toEqual(finished);
+      expect(Cpu.debug_log(cpu)) |> toEqual(target_log);
     });
   });
 });
