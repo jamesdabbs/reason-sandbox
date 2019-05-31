@@ -2,21 +2,11 @@ open Jest;
 open Expect;
 open! Expect.Operators;
 
-[@bs.val] external __dirname: string = "";
-
-let expandPath = (path: string) => {
-  Node.Path.resolve(__dirname, path);
-};
-
-let rom_path = (name: string) => {
-  expandPath("./roms/" ++ name ++ ".nes");
-};
-
 describe("Disassemble", () => {
-  let rom = Rom.parse(rom_path("nestest"));
+  let rom = Spec.rom("nestest");
   let memory = Memory.build(rom);
   let instructions =
-    Instruction.load(expandPath("../src/instructions.json"));
+    Instruction.load(Util.expand_path("src/instructions.json"));
 
   let disassemble = Disassemble.make(instructions, memory);
 

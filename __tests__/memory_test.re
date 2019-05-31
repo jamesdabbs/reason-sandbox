@@ -2,18 +2,8 @@ open Jest;
 open Expect;
 open! Expect.Operators;
 
-[@bs.val] external __dirname: string = "";
-
-let expandPath = (path: string) => {
-  Node.Path.resolve(__dirname, path);
-};
-
-let rom_path = (name: string) => {
-  expandPath("./roms/" ++ name ++ ".nes");
-};
-
 describe("Memory", () => {
-  let rom = Rom.parse(rom_path("nestest"));
+  let rom = Spec.rom("nestest");
   let memory = Memory.build(rom);
 
   test("it can set a value in RAM", () => {

@@ -14,13 +14,6 @@ let add_opcodes = (lookup, instruction: Instruction.t) =>
 
 let to_hex = (n: int) => Printf.sprintf("%02X", n);
 
-let ljust = (width: int, str: string) =>
-  if (width > String.length(str)) {
-    str ++ String.make(width - String.length(str), ' ');
-  } else {
-    String.sub(str, 0, width);
-  };
-
 let format =
     (
       start: int,
@@ -34,7 +27,7 @@ let format =
   let hargs =
     Array.fold_left((acc, arg) => acc ++ " " ++ to_hex(arg), "", args)
     |> String.trim
-    |> ljust(5);
+    |> Util.ljust(5);
   let label = String.uppercase(instruction.label);
 
   {j|$hstart $hcode $hargs ;; $label\n|j};

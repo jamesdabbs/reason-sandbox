@@ -4,19 +4,13 @@ open! Expect.Operators;
 
 module Map = Belt.Map.String;
 
-[@bs.val] external __dirname: string = "";
-
-let expandPath = (path: string) => {
-  Node.Path.resolve(__dirname, path);
-};
-
 exception NotFound(string);
 
 describe("Instruction", () => {
   open Instruction;
 
   let instructions: Map.t(Instruction.t) =
-    load(expandPath("../src/instructions.json"))
+    load(Util.expand_path("src/instructions.json"))
     |> Array.map(instruction => (instruction.label, instruction))
     |> Map.fromArray;
 

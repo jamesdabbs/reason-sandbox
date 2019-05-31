@@ -1,15 +1,6 @@
 open Jest;
 open Expect;
-
-[@bs.val] external __dirname: string = "";
-
-let expandPath = (path: string) => {
-  Node.Path.resolve(__dirname, path);
-};
-
-let rom_path = (name: string) => {
-  expandPath("./roms/" ++ name ++ ".nes");
-};
+open Spec;
 
 describe("CPU", () => {
   let rom = Rom.parse(rom_path("nestest"));
@@ -65,7 +56,7 @@ describe("CPU", () => {
   });
 
   describe("nestest", () => {
-    let instrs = Instruction.load(expandPath("../src/instructions.json"));
+    let instrs = Instruction.load(Util.expand_path("src/instructions.json"));
     let disasm = Disassemble.make(instrs, memory);
     let cpu = Cpu.copy(initial);
     cpu.pc = 0xc000;
@@ -83,7 +74,7 @@ describe("CPU", () => {
     };
 
     test("runs legal opcodes successfully", () => {
-      let path = expandPath("./roms/nestest.log");
+      let path = Util.expand_path("__tests__/roms/nestest.log");
       let log = Node.Fs.readFileSync(path, `utf8);
       let lines = Js.String.split("\n", log);
       let target = "C5F5";

@@ -31,8 +31,16 @@ let reset = cpu => {
 };
 
 let debug_log = cpu => {
-  Printf.sprintf("%04X A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%i",
-  cpu.pc, cpu.acc, cpu.x, cpu.y, cpu.status, cpu.stack, cpu.cycles);
+  Printf.sprintf(
+    "%04X A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%i",
+    cpu.pc,
+    cpu.acc,
+    cpu.x,
+    cpu.y,
+    cpu.status,
+    cpu.stack,
+    cpu.cycles,
+  );
 };
 
 exception InstructionNotImplemented(int);

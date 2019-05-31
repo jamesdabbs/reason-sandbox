@@ -2,39 +2,29 @@ open Jest;
 open Expect;
 open! Expect.Operators;
 
-[@bs.val] external __dirname: string = "";
-
-let expandPath = (path: string) => {
-  Node.Path.resolve(__dirname, path);
-};
-
-let rom_path = (name: string) => {
-  expandPath("./roms/" ++ name ++ ".nes");
-};
-
 describe("Demo", () =>
   describe("parse_rom", () => {
     describe("aorom", () => {
-      let rom = Rom.parse(rom_path("aorom"));
+      let rom = Rom.parse(Spec.rom_path("aorom"));
 
       test("pathname", () =>
-        expect(rom.pathname) === rom_path("aorom")
+        expect(rom.pathname) === Spec.rom_path("aorom")
       );
 
-      test("mapper_id", () => 
+      test("mapper_id", () =>
         expect(rom.mapper_id) === 10
       );
 
-      test("mapper", () => {
+      test("mapper", () =>
         expect(rom.mapper) === Unknown
-      });
+      );
     });
 
     describe("nestest", () => {
-      let rom = Rom.parse(rom_path("nestest"));
+      let rom = Rom.parse(Spec.rom_path("nestest"));
 
       test("pathname", () =>
-        expect(rom.pathname) === rom_path("nestest")
+        expect(rom.pathname) === Spec.rom_path("nestest")
       );
 
       test("prg_count", () =>
@@ -57,7 +47,7 @@ describe("Demo", () =>
         expect(rom.mirroring) === Horizontal
       );
 
-      test("mapper_id", () => 
+      test("mapper_id", () =>
         expect(rom.mapper_id) === 0
       );
 
