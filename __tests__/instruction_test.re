@@ -65,13 +65,13 @@ describe("Instruction", () => {
              code: Char.chr(76),
              length: 3,
              timing: 3,
-             addressing_mode: Some(Opcode.Absolute),
+             addressing_mode: Opcode.Absolute,
            },
            {
              code: Char.chr(108),
              length: 3,
              timing: 5,
-             addressing_mode: Some(Opcode.Indirect),
+             addressing_mode: Opcode.Indirect,
            },
          |]
     );

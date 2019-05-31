@@ -58,8 +58,9 @@ describe("CPU", () => {
     let cpu = Cpu.copy(initial);
     cpu.pc = 0xc000;
 
-    test("returns nestest compatible cpu state", () => 
-      expect(Cpu.debug_log(cpu)) |> toEqual("C000 A:00 X:00 Y:00 P:24 SP:FD CYC:0")
+    test("returns nestest compatible cpu state", () =>
+      expect(Cpu.debug_log(cpu))
+      |> toEqual("C000 A:00 X:00 Y:00 P:24 SP:FD CYC:0")
     );
   });
 
@@ -69,30 +70,29 @@ describe("CPU", () => {
     let cpu = Cpu.copy(initial);
     cpu.pc = 0xc000;
 
-    let trace = (line) => {
-      let dis = disasm(cpu.pc, 1)
-      let actual = Cpu.debug_log(cpu)
-      Js.log({j|
+    let trace = line => {
+      let dis = disasm(cpu.pc, 1);
+      let actual = Cpu.debug_log(cpu);
+      Js.log(
+        {j|
         Expected: $line
         Actual: $actual
         Disassembly: $dis
-      |j});
-    }
+      |j},
+      );
+    };
 
     test("runs legal opcodes successfully", () => {
       let path = expandPath("./roms/nestest.log");
       let log = Node.Fs.readFileSync(path, `utf8);
       let lines = Js.String.split("\n", log);
-      let target = "C5F5"
-      let log_at = (line) => Js.String2.startsWith(line, target);
-      let target_log = switch (Js.Array.find(log_at, lines)) {
-      | None => ""
-      | Some(value) => value
-      }
+      let target = "C5F5";
+      let log_at = line => Js.String2.startsWith(line, target);
+      let target_log = Js.Array.find(log_at, lines) |> Util.default("");
 
       let count = ref(0);
-      let cpu_at = (target) => cpu.pc == int_of_string("0x" ++ target);
-      let logs_match = (cpu, line) => Cpu.debug_log(cpu) == lines[line]
+      let cpu_at = target => cpu.pc == int_of_string("0x" ++ target);
+      let logs_match = (cpu, line) => Cpu.debug_log(cpu) == lines[line];
 
       while (!cpu_at(target) && logs_match(cpu, count^)) {
         trace(lines[count^]);

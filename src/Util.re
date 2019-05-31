@@ -4,3 +4,10 @@ let show_hex = (string: string) => {
   )
   |> Js.Array.joinWith(" ");
 };
+
+let default = (def, mval) => {
+  switch (mval) {
+  | Some(a) => a
+  | None => def
+  };
+};

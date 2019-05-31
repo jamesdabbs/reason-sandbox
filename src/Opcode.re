@@ -11,13 +11,13 @@ type addressing_mode =
   | ZeroPage
   | ZeroPageX
   | ZeroPageY
-  | None;
+  | Implicit;
 
 exception UnrecognizedAddressingMode(string);
 
 let decode_addressing_mode = (json: Js.Json.t): addressing_mode => {
   switch (Js.Json.decodeString(json)) {
-  | None => None
+  | None => Implicit
   | Some(value) =>
     switch (value) {
     | "absolute" => Absolute
@@ -41,7 +41,7 @@ type t = {
   code: char,
   length: int,
   timing: int,
-  addressing_mode: option(addressing_mode),
+  addressing_mode,
 };
 
 let decode = (json: Js.Json.t): t => {
@@ -52,6 +52,8 @@ let decode = (json: Js.Json.t): t => {
     length: json |> field("length", int),
     timing: json |> field("timing", int),
     addressing_mode:
-      json |> optional(field("addressing_mode", decode_addressing_mode)),
+      json
+      |> optional(field("addressing_mode", decode_addressing_mode))
+      |> Util.default(Implicit),
   };
 };
