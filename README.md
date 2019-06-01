@@ -1,18 +1,11 @@
-# Basic Reason Template
-
-Hello! This project allows you to quickly get started with Reason and BuckleScript. If you wanted a more sophisticated version, try the `react` template (`bsb -theme react -init .`).
-
-# Build
-```
-npm run build
-```
-
-# Build + Watch
+# Running
 
 ```
-npm run start
+yarn start           # watch for changes and rebuild
+yarn test --watchAll # run tests
 ```
 
+# NES Documentation
 
-# Editor
-If you use `vscode`, Press `Windows + Shift + B` it will build automatically
+* [Instruction reference](http://obelisk.me.uk/6502/reference.html)
+* The [status register](https://wiki.nesdev.com/w/index.php/Status_flags)
