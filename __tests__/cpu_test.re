@@ -104,9 +104,9 @@ describe("CPU", () => {
           let dis = disasm(previous_pc, 1);
           Js.log(
             {j|
-            Previous: $before
-            Expected: $line
-            Actual:   $after
+            Previous:    $before
+            Expected:    $line
+            Actual:      $after
             Disassembly: $dis
           |j},
           );

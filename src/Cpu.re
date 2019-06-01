@@ -74,20 +74,6 @@ let stack_push = (cpu: t, value: int) => {
   cpu.stack = cpu.stack - 1;
 };
 
-let subtract_with_borrow = (cpu, argument) => {
-  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 0 : 1;
-  let result = cpu.acc - argument - carry_bit;
-  Flag.Register.set(
-    cpu.status,
-    Flag.Overflow,
-    check_overflow(result, cpu.acc, argument),
-  );
-  Flag.Register.set(cpu.status, Flag.Carry, result >= 0);
-  cpu.acc = result land 0xff;
-
-  set_flags_zn(cpu, cpu.acc);
-};
-
 let add_with_carry = (cpu, argument) => {
   let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 1 : 0;
   let result = cpu.acc + argument + carry_bit;
@@ -129,6 +115,30 @@ let compare_x = (cpu, argument) => {
 let compare_y = (cpu, argument) => {
   set_flags_zn(cpu, cpu.y - argument);
   Flag.Register.set(cpu.status, Flag.Carry, cpu.y >= argument);
+};
+
+let decrement_x = (cpu, _argument) => {
+  cpu.x = cpu.x == 0 ? 0xff : cpu.x - 1;
+
+  set_flags_zn(cpu, cpu.x);
+};
+
+let decrement_y = (cpu, _argument) => {
+  cpu.y = cpu.y == 0 ? 0xff : cpu.y - 1;
+
+  set_flags_zn(cpu, cpu.y);
+};
+
+let increment_x = (cpu, _argument) => {
+  cpu.x = (cpu.x + 1) land 0xff;
+
+  set_flags_zn(cpu, cpu.x);
+};
+
+let increment_y = (cpu, _argument) => {
+  cpu.y = (cpu.y + 1) land 0xff;
+
+  set_flags_zn(cpu, cpu.y);
 };
 
 let jump = (cpu, argument) => {
@@ -210,10 +220,53 @@ let store_x = (cpu, argument) => {
   Memory.set_byte(cpu.memory, argument, cpu.x);
 };
 
+let subtract_with_borrow = (cpu, argument) => {
+  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 0 : 1;
+  let result = cpu.acc - argument - carry_bit;
+  Flag.Register.set(
+    cpu.status,
+    Flag.Overflow,
+    check_overflow(result, cpu.acc, argument lxor 0b10000000),
+  );
+  Flag.Register.set(cpu.status, Flag.Carry, result >= 0);
+  cpu.acc = result land 0xff;
+
+  set_flags_zn(cpu, cpu.acc);
+};
+
 let test_bits = (cpu, argument) => {
   Flag.Register.set(cpu.status, Flag.Negative, Util.read_bit(argument, 7));
   Flag.Register.set(cpu.status, Flag.Overflow, Util.read_bit(argument, 6));
   Flag.Register.set(cpu.status, Flag.Zero, argument land cpu.acc == 0);
+};
+
+let transfer_acc_to_x = (cpu, _) => {
+  cpu.x = cpu.acc;
+  set_flags_zn(cpu, cpu.x);
+};
+
+let transfer_acc_to_y = (cpu, _) => {
+  cpu.y = cpu.acc;
+  set_flags_zn(cpu, cpu.y);
+};
+
+let transfer_stack_to_x = (cpu, _) => {
+  cpu.x = cpu.stack;
+  set_flags_zn(cpu, cpu.x);
+};
+
+let transfer_x_to_acc = (cpu, _) => {
+  cpu.acc = cpu.x;
+  set_flags_zn(cpu, cpu.acc);
+};
+
+let transfer_x_to_stack = (cpu, _) => {
+  cpu.stack = cpu.x;
+};
+
+let transfer_y_to_acc = (cpu, _) => {
+  cpu.acc = cpu.y;
+  set_flags_zn(cpu, cpu.acc);
 };
 
 let xor_with_acc = (cpu, argument) => {
@@ -257,7 +310,11 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | "cmp" => compare_acc
     | "cpx" => compare_x
     | "cpy" => compare_y
+    | "dex" => decrement_x
+    | "dey" => decrement_y
     | "eor" => xor_with_acc
+    | "inx" => increment_x
+    | "iny" => increment_y
     | "jmp" => jump
     | "jsr" => jump_subroutine
     | "lda" => load_acc
@@ -276,6 +333,12 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | "sei" => set_flag(Flag.InterruptDisable, true)
     | "sta" => store_acc
     | "stx" => store_x
+    | "tax" => transfer_acc_to_x
+    | "tay" => transfer_acc_to_y
+    | "tsx" => transfer_stack_to_x
+    | "txa" => transfer_x_to_acc
+    | "txs" => transfer_x_to_stack
+    | "tya" => transfer_y_to_acc
     | _ => raise(InstructionNotImplemented(definition.label))
     };
 
