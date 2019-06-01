@@ -120,14 +120,24 @@ let table: InstructionTable.t(t => unit) =
     InstructionTable.empty,
   );
 
-let step = cpu => {
+type error =
+  | AddressingModeNotImplemented(Opcode.addressing_mode)
+  | InstructionNotImplemented(string)
+  | OpcodeNotFound(int);
+
+let step = (cpu: t): option(error) => {
   let opcode = Memory.get_byte(cpu.memory, cpu.pc);
   cpu.pc = cpu.pc + 1;
 
   switch (InstructionTable.find(opcode, table)) {
-  | command => command(cpu)
-  | exception Not_found => raise(OpcodeNotFound(opcode))
+  | command =>
+    switch (command(cpu)) {
+    | exception (AddressingModeNotImplemented(mode)) =>
+      Some(AddressingModeNotImplemented(mode))
+    | exception (InstructionNotImplemented(ins)) =>
+      Some(InstructionNotImplemented(ins))
+    | _ => None
+    }
+  | exception Not_found => Some(OpcodeNotFound(opcode))
   };
-
-  ();
 };

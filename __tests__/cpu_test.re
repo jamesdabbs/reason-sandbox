@@ -87,7 +87,7 @@ describe("CPU", () => {
       let path = Util.expand_path("__tests__/roms/nestest.log");
       let log = Node.Fs.readFileSync(path, `utf8);
       let lines = Js.String.split("\n", log);
-      let target = "C5F7";
+      let target = "C5F9";
       let log_at = line => Js.String2.startsWith(line, target);
       let target_log = Js.Array.find(log_at, lines) |> Util.default("");
 
@@ -97,7 +97,18 @@ describe("CPU", () => {
 
       while (!cpu_at(target) && logs_match(cpu, count^)) {
         trace(lines[count^]);
-        Cpu.step(cpu);
+        switch (Cpu.step(cpu)) {
+        | Some(Cpu.AddressingModeNotImplemented(mode)) =>
+          Js.Console.log(
+            "Addressing mode not implemented: "
+            ++ Opcode.inspect_addressing_mode(mode),
+          )
+        | Some(Cpu.InstructionNotImplemented(instruction)) =>
+          Js.Console.log("Instruction not implemented: " ++ instruction)
+        | Some(Cpu.OpcodeNotFound(code)) =>
+          Js.Console.log("Opcode not found: " ++ string_of_int(code))
+        | _ => ()
+        };
         count := count^ + 1;
       };
 

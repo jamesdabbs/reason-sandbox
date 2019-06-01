@@ -24,6 +24,24 @@ type t = {
 
 exception UnrecognizedAddressingMode(string);
 
+let inspect_addressing_mode = (mode: addressing_mode) => {
+  switch (mode) {
+  | Absolute => "absolute"
+  | AbsoluteX => "absoluteX"
+  | AbsoluteY => "absoluteY"
+  | Accumulator => "accumulator"
+  | Immediate => "immediate"
+  | Indirect => "indirect"
+  | IndirectX => "indirectX"
+  | IndirectY => "indirectY"
+  | Relative => "relative"
+  | ZeroPage => "zeroPage"
+  | ZeroPageX => "zeroPageX"
+  | ZeroPageY => "zeroPageY"
+  | Implicit => "implicit"
+  };
+};
+
 let decode_addressing_mode = (json: Js.Json.t): addressing_mode => {
   switch (Js.Json.decodeString(json)) {
   | None => Implicit
