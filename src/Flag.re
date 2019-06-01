@@ -3,6 +3,7 @@ type t =
   | Zero
   | InterruptDisable
   | Decimal
+  | Break
   | Overflow
   | Negative;
 
@@ -12,6 +13,7 @@ let index = (flag: t): int => {
   | Zero => 1
   | InterruptDisable => 2
   | Decimal => 3
+  | Break => 4
   | Overflow => 6
   | Negative => 7
   };
