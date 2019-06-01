@@ -2,6 +2,8 @@ open Jest;
 open Expect;
 open Spec;
 
+exception LinesDoNotMatch(string, string);
+
 describe("CPU", () => {
   let rom = Rom.parse(rom_path("nestest"));
   let memory = Memory.build(rom);
@@ -84,36 +86,32 @@ describe("CPU", () => {
     };
 
     test("runs legal opcodes successfully", () => {
-      let path = Util.expand_path("__tests__/roms/nestest.log");
-      let log = Node.Fs.readFileSync(path, `utf8);
-      let lines = Js.String.split("\n", log);
       let target = "CA05";
-      let log_at = line => Js.String2.startsWith(line, target);
-      let target_log = Js.Array.find(log_at, lines) |> Util.default("");
+      let tracing = false;
 
-      let count = ref(0);
-      let cpu_at = target => cpu.pc == int_of_string("0x" ++ target);
-      let logs_match = (cpu, line) => Cpu.debug_log(cpu) == lines[line];
+      let path = Util.expand_path("__tests__/roms/nestest.log");
+      let lines = Node.Fs.readFileSync(path, `utf8) |> Js.String.split("\n");
 
-      while (!cpu_at(target) && logs_match(cpu, count^)) {
-        trace(lines[count^]);
-        switch (Cpu.step(cpu)) {
-        | Some(Cpu.AddressingModeNotImplemented(mode)) =>
-          Js.log(
-            "Addressing mode not implemented: "
-            ++ AddressingMode.inspect(mode),
-          )
-        | Some(Cpu.InstructionNotImplemented(instruction)) =>
-          Js.log("Instruction not implemented: " ++ instruction)
-        | Some(Cpu.OpcodeNotFound(code)) =>
-          Js.log("Opcode not found: " ++ string_of_int(code))
-        | _ => ()
+      let rec run = index => {
+        let line = lines[index];
+        if (tracing) {
+          trace(line);
         };
-        count := count^ + 1;
+
+        let actual = Cpu.debug_log(cpu);
+        if (actual != line) {
+          raise(LinesDoNotMatch(actual, line));
+        } else if (cpu.pc == int_of_string("0x" ++ target)) {
+          ();
+        } else {
+          Cpu.step(cpu);
+          run(index + 1);
+        };
       };
 
-      trace(lines[count^]);
-      expect(Cpu.debug_log(cpu)) |> toEqual(target_log);
+      expect(() =>
+        run(0)
+      ) |> not_ |> toThrow;
     });
   });
 });
