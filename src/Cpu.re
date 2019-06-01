@@ -48,16 +48,29 @@ let debug_log = cpu => {
   );
 };
 
-let set_flag = (cpu: t) => Flag.Register.set(cpu.status);
+let set_flag = (flag, value, cpu: t, _argument) => {
+  Flag.Register.set(cpu.status, flag, value);
+};
 
 let set_flags_zn = (cpu: t, value: int) => {
-  set_flag(cpu, Flag.Zero, value == 0);
-  set_flag(cpu, Flag.Negative, Util.read_bit(value, 7));
+  Flag.Register.set(cpu.status, Flag.Zero, value == 0);
+  Flag.Register.set(cpu.status, Flag.Negative, Util.read_bit(value, 7));
+};
+
+let stack_pop = (cpu: t) => {
+  cpu.stack = cpu.stack + 1;
+  Memory.get_byte(cpu.memory, 0x100 + cpu.stack);
 };
 
 let stack_push = (cpu: t, value: int) => {
   Memory.set_byte(cpu.memory, 0x100 + cpu.stack, value);
   cpu.stack = cpu.stack - 1;
+};
+
+let and_with_acc = (cpu, argument) => {
+  cpu.acc = cpu.acc land argument;
+
+  set_flags_zn(cpu, cpu.acc);
 };
 
 let branch_on_flag = (flag, expected, cpu, argument) =>
@@ -68,8 +81,8 @@ let branch_on_flag = (flag, expected, cpu, argument) =>
     cpu.pc = cpu.pc + 1;
   };
 
-let clear_carry = (cpu, _argument) => {
-  set_flag(cpu, Flag.Carry, false);
+let compare = (cpu, argument) => {
+  set_flags_zn(cpu, cpu.acc - argument);
 };
 
 let jump = (cpu, argument) => {
@@ -77,8 +90,10 @@ let jump = (cpu, argument) => {
 };
 
 let jump_subroutine = (cpu, argument) => {
-  stack_push(cpu, cpu.pc lsr 8);
-  stack_push(cpu, cpu.pc land 0xff);
+  let target = cpu.pc + 2;
+
+  stack_push(cpu, target lsr 8);
+  stack_push(cpu, target land 0xff);
 
   cpu.pc = argument;
 };
@@ -99,8 +114,25 @@ let nop = (_cpu, _argument) => {
   ();
 };
 
-let set_carry = (cpu, _argument) => {
-  set_flag(cpu, Flag.Carry, true);
+let pop_acc = (cpu, _argument) => {
+  cpu.acc = stack_pop(cpu);
+
+  set_flags_zn(cpu, cpu.acc);
+};
+
+let push_status = (cpu, _argument) => {
+  // See https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
+  stack_push(
+    cpu,
+    Flag.Register.to_int(cpu.status) lor 0x10,
+  );
+};
+
+let return_from_subroutine = (cpu, _argument) => {
+  let low = stack_pop(cpu);
+  let high = stack_pop(cpu);
+
+  cpu.pc = high lsl 8 + low;
 };
 
 let store_acc = (cpu, argument) => {
@@ -112,9 +144,9 @@ let store_x = (cpu, argument) => {
 };
 
 let test_bits = (cpu, argument) => {
-  set_flag(cpu, Flag.Negative, Util.read_bit(argument, 7));
-  set_flag(cpu, Flag.Overflow, Util.read_bit(argument, 6));
-  set_flag(cpu, Flag.Zero, argument land cpu.acc == 0);
+  Flag.Register.set(cpu.status, Flag.Negative, Util.read_bit(argument, 7));
+  Flag.Register.set(cpu.status, Flag.Overflow, Util.read_bit(argument, 6));
+  Flag.Register.set(cpu.status, Flag.Zero, argument land cpu.acc == 0);
 };
 
 let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
@@ -136,19 +168,29 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
 
   let operation =
     switch (definition.label) {
+    | "and" => and_with_acc
     | "bcc" => branch_on_flag(Flag.Carry, false)
     | "bcs" => branch_on_flag(Flag.Carry, true)
     | "beq" => branch_on_flag(Flag.Zero, true)
     | "bit" => test_bits
     | "bne" => branch_on_flag(Flag.Zero, false)
+    | "bpl" => branch_on_flag(Flag.Negative, false)
+    | "bvc" => branch_on_flag(Flag.Overflow, false)
     | "bvs" => branch_on_flag(Flag.Overflow, true)
-    | "clc" => clear_carry
+    | "clc" => set_flag(Flag.Carry, false)
+    | "cld" => set_flag(Flag.Decimal, false)
+    | "cmp" => compare
     | "jmp" => jump
     | "jsr" => jump_subroutine
     | "lda" => load_acc
     | "ldx" => load_x
     | "nop" => nop
-    | "sec" => set_carry
+    | "php" => push_status
+    | "pla" => pop_acc
+    | "rts" => return_from_subroutine
+    | "sec" => set_flag(Flag.Carry, true)
+    | "sed" => set_flag(Flag.Decimal, true)
+    | "sei" => set_flag(Flag.InterruptDisable, true)
     | "sta" => store_acc
     | "stx" => store_x
     | _ => raise(InstructionNotImplemented(definition.label))
