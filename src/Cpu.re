@@ -1,11 +1,11 @@
 type t = {
-  memory: Memory.memory,
+  memory: Memory.t,
+  status: Flag.Register.t,
   mutable cycles: int,
   mutable x: int,
   mutable y: int,
   mutable acc: int,
   mutable stack: int,
-  mutable status: int,
   mutable pc: int,
 };
 
@@ -20,10 +20,23 @@ exception InstructionNotImplemented(string);
 exception OpcodeNotFound(int);
 
 let build = memory => {
-  {memory, cycles: 0, x: 0, y: 0, acc: 0, stack: 253, status: 36, pc: 0xfffc};
+  {
+    memory,
+    cycles: 0,
+    x: 0,
+    y: 0,
+    acc: 0,
+    stack: 253,
+    status: Flag.Register.from_int(0b100100),
+    pc: 0xfffc,
+  };
 };
 
-let copy = cpu => {...cpu, pc: cpu.pc};
+let copy = cpu => {
+  ...cpu,
+  memory: Memory.copy(cpu.memory),
+  status: Flag.Register.copy(cpu.status),
+};
 
 let reset = cpu => {
   cpu.pc = Memory.get_word(cpu.memory, cpu.pc);
@@ -36,7 +49,7 @@ let debug_log = cpu => {
     cpu.acc,
     cpu.x,
     cpu.y,
-    cpu.status,
+    Flag.Register.to_int(cpu.status),
     cpu.stack,
     cpu.cycles,
   );

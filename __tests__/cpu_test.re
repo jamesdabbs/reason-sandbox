@@ -13,7 +13,7 @@ describe("CPU", () => {
     );
 
     test("status", () =>
-      expect(initial.status) |> toEqual(36)
+      expect(Flag.Register.to_int(initial.status)) |> toEqual(0b100100)
     );
 
     test("pc", () =>
