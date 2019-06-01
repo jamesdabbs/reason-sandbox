@@ -113,6 +113,12 @@ let store_x = (cpu, argument) => {
   Memory.set_byte(cpu.memory, argument, cpu.x);
 };
 
+let test_bits = (cpu, argument) => {
+  set_flag(cpu, Flag.Negative, Util.read_bit(argument, 7))
+  set_flag(cpu, Flag.Overflow, Util.read_bit(argument, 6))
+  set_flag(cpu, Flag.Zero, (argument land cpu.acc) == 0)
+}
+
 let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
   switch (definition.access_pattern) {
   | Jump => 0
@@ -128,7 +134,9 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | "bcc" => branch_on_flag(Flag.Carry, false)
     | "bcs" => branch_on_flag(Flag.Carry, true)
     | "beq" => branch_on_flag(Flag.Zero, true)
+    | "bit" => test_bits
     | "bne" => branch_on_flag(Flag.Zero, false)
+    | "bvs" => branch_on_flag(Flag.Overflow, true)
     | "clc" => clear_carry
     | "jmp" => jump
     | "jsr" => jump_subroutine
