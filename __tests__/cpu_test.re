@@ -67,7 +67,7 @@ describe("CPU", () => {
       Js.log(
         {j|
         Expected: $line
-        Actual: $actual
+        Actual:   $actual
         Disassembly: $dis
       |j},
       );
