@@ -64,6 +64,13 @@ let get_argument = (cpu: Types.cpu, mode: t) => {
   | ZeroPage =>
     let addr = Memory.get_byte(cpu.memory, cpu.pc);
     Memory.get_byte(cpu.memory, addr);
+  | Relative =>
+    let offset = Memory.get_byte(cpu.memory, cpu.pc);
+    if (Util.read_bit(offset, 7)) {
+      cpu.pc - offset lxor 0xff;
+    } else {
+      cpu.pc + offset + 1;
+    }
   | _ => raise(NotImplemented(mode))
   };
 };

@@ -60,6 +60,20 @@ let stack_push = (cpu: t, value: int) => {
   cpu.stack = cpu.stack - 1;
 }
 
+let branch_on_flag = (flag, expected, cpu, argument) => {
+  if (Flag.Register.get(cpu.status, flag) == expected) {
+    cpu.cycles = cpu.cycles + 1;
+    cpu.pc = argument;
+  } else {
+    cpu.pc = cpu.pc + 1;
+  }
+
+}
+
+let clear_carry = (cpu, _argument) => {
+  set_flag(cpu, Flag.Carry, false);
+}
+
 let jump = (cpu, argument) => {
   cpu.pc = argument;
 };
@@ -69,6 +83,12 @@ let jump_subroutine = (cpu, argument) => {
   stack_push(cpu, cpu.pc land 0xff);
 
   cpu.pc = argument;
+};
+
+let load_acc = (cpu, argument) => {
+  cpu.acc = argument;
+
+  set_flags_zn(cpu, cpu.acc);
 };
 
 let load_x = (cpu, argument) => {
@@ -83,6 +103,10 @@ let nop = (_cpu, _argument) => {
 
 let set_carry = (cpu, _argument) => {
   set_flag(cpu, Flag.Carry, true);
+}
+
+let store_acc = (cpu, argument) => {
+  Memory.set_byte(cpu.memory, argument, cpu.acc);
 }
 
 let store_x = (cpu, argument) => {
@@ -101,11 +125,18 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
 
   let operation =
     switch (definition.label) {
+    | "bcc" => branch_on_flag(Flag.Carry, false)
+    | "bcs" => branch_on_flag(Flag.Carry, true)
+    | "beq" => branch_on_flag(Flag.Zero, true)
+    | "bne" => branch_on_flag(Flag.Zero, false)
+    | "clc" => clear_carry
     | "jmp" => jump
     | "jsr" => jump_subroutine
+    | "lda" => load_acc
     | "ldx" => load_x
     | "nop" => nop
     | "sec" => set_carry
+    | "sta" => store_acc
     | "stx" => store_x
     | _ => raise(InstructionNotImplemented(definition.label))
     };
