@@ -58,21 +58,19 @@ let set_flags_zn = (cpu: t, value: int) => {
 let stack_push = (cpu: t, value: int) => {
   Memory.set_byte(cpu.memory, 0x100 + cpu.stack, value);
   cpu.stack = cpu.stack - 1;
-}
+};
 
-let branch_on_flag = (flag, expected, cpu, argument) => {
+let branch_on_flag = (flag, expected, cpu, argument) =>
   if (Flag.Register.get(cpu.status, flag) == expected) {
     cpu.cycles = cpu.cycles + 1;
     cpu.pc = argument;
   } else {
     cpu.pc = cpu.pc + 1;
-  }
-
-}
+  };
 
 let clear_carry = (cpu, _argument) => {
   set_flag(cpu, Flag.Carry, false);
-}
+};
 
 let jump = (cpu, argument) => {
   cpu.pc = argument;
@@ -99,25 +97,25 @@ let load_x = (cpu, argument) => {
 
 let nop = (_cpu, _argument) => {
   ();
-}
+};
 
 let set_carry = (cpu, _argument) => {
   set_flag(cpu, Flag.Carry, true);
-}
+};
 
 let store_acc = (cpu, argument) => {
   Memory.set_byte(cpu.memory, argument, cpu.acc);
-}
+};
 
 let store_x = (cpu, argument) => {
   Memory.set_byte(cpu.memory, argument, cpu.x);
 };
 
 let test_bits = (cpu, argument) => {
-  set_flag(cpu, Flag.Negative, Util.read_bit(argument, 7))
-  set_flag(cpu, Flag.Overflow, Util.read_bit(argument, 6))
-  set_flag(cpu, Flag.Zero, (argument land cpu.acc) == 0)
-}
+  set_flag(cpu, Flag.Negative, Util.read_bit(argument, 7));
+  set_flag(cpu, Flag.Overflow, Util.read_bit(argument, 6));
+  set_flag(cpu, Flag.Zero, argument land cpu.acc == 0);
+};
 
 let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
   switch (definition.access_pattern) {
@@ -127,7 +125,14 @@ let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
 };
 
 let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
-  let argument = AddressingMode.get_argument(cpu, opcode.addressing_mode);
+  let address = AddressingMode.get_address(cpu, opcode.addressing_mode);
+
+  let operand =
+    switch (definition.access_pattern) {
+    | Instruction.Read => Memory.get_byte(cpu.memory, address)
+    | Instruction.Static => 0
+    | _ => address
+    };
 
   let operation =
     switch (definition.label) {
@@ -149,7 +154,7 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | _ => raise(InstructionNotImplemented(definition.label))
     };
 
-  operation(cpu, argument);
+  operation(cpu, operand);
 
   cpu.cycles = cpu.cycles + opcode.timing;
   cpu.pc = cpu.pc + step_size(definition, opcode);
