@@ -9,8 +9,6 @@ type t = {
   mutable pc: int,
 };
 
-type cpu = t;
-
 module InstructionTable =
   Map.Make({
     type t = Opcode.code;
@@ -80,7 +78,7 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
   cpu.cycles = cpu.cycles + opcode.timing;
 };
 
-let add_instructions = (definition: Instruction.t) =>
+let add_instruction = (definition: Instruction.t) =>
   Array.fold_right(
     opcode =>
       InstructionTable.add(
@@ -92,7 +90,7 @@ let add_instructions = (definition: Instruction.t) =>
 
 let table: InstructionTable.t(t => unit) =
   Array.fold_right(
-    add_instructions,
+    add_instruction,
     Instruction.load(Util.expand_path("src/instructions.json")),
     InstructionTable.empty,
   );
