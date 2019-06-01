@@ -15,7 +15,7 @@ module InstructionTable =
     let compare = compare;
   });
 
-exception AddressingModeNotImplemented(Opcode.addressing_mode);
+exception AddressingModeNotImplemented(AddressingMode.t);
 exception InstructionNotImplemented(string);
 exception OpcodeNotFound(int);
 
@@ -72,7 +72,7 @@ let load_x = (cpu, argument) => {
   set_flags_zn(cpu, cpu.x);
 };
 
-let get_argument = (cpu: t, mode: Opcode.addressing_mode) => {
+let get_argument = (cpu: t, mode: AddressingMode.t) => {
   switch (mode) {
   | Immediate => Memory.get_byte(cpu.memory, cpu.pc)
   | Absolute => Memory.get_word(cpu.memory, cpu.pc)
@@ -121,7 +121,7 @@ let table: InstructionTable.t(t => unit) =
   );
 
 type error =
-  | AddressingModeNotImplemented(Opcode.addressing_mode)
+  | AddressingModeNotImplemented(AddressingMode.t)
   | InstructionNotImplemented(string)
   | OpcodeNotFound(int);
 

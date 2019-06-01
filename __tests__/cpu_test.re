@@ -101,7 +101,7 @@ describe("CPU", () => {
         | Some(Cpu.AddressingModeNotImplemented(mode)) =>
           Js.Console.log(
             "Addressing mode not implemented: "
-            ++ Opcode.inspect_addressing_mode(mode),
+            ++ AddressingMode.inspect(mode),
           )
         | Some(Cpu.InstructionNotImplemented(instruction)) =>
           Js.Console.log("Instruction not implemented: " ++ instruction)

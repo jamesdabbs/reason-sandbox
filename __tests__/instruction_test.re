@@ -59,18 +59,23 @@ describe("Instruction", () => {
     test("opcodes", () =>
       expect(jmp.opcodes)
       == [|
-           {code: 76, length: 3, timing: 3, addressing_mode: Opcode.Absolute},
+           {
+             code: 76,
+             length: 3,
+             timing: 3,
+             addressing_mode: AddressingMode.Absolute,
+           },
            {
              code: 108,
              length: 3,
              timing: 5,
-             addressing_mode: Opcode.Indirect,
+             addressing_mode: AddressingMode.Indirect,
            },
          |]
     );
 
     test("access_pattern", () =>
-      expect(jmp.access_pattern) == Instruction.Jump 
+      expect(jmp.access_pattern) == Instruction.Jump
     );
   });
 });
