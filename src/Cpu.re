@@ -55,7 +55,19 @@ let set_flags_zn = (cpu: t, value: int) => {
   set_flag(cpu, Flag.Negative, Util.read_bit(value, 7));
 };
 
+let stack_push = (cpu: t, value: int) => {
+  Memory.set_byte(cpu.memory, 0x100 + cpu.stack, value);
+  cpu.stack = cpu.stack - 1;
+}
+
 let jump = (cpu, argument) => {
+  cpu.pc = argument;
+};
+
+let jump_subroutine = (cpu, argument) => {
+  stack_push(cpu, cpu.pc lsr 8);
+  stack_push(cpu, cpu.pc land 0xff);
+
   cpu.pc = argument;
 };
 
@@ -81,6 +93,7 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
 
   let operation =
     switch (definition.label) {
+    | "jsr" => jump_subroutine
     | "jmp" => jump
     | "ldx" => load_x
     | "stx" => store_x
