@@ -39,6 +39,10 @@ describe("Instruction", () => {
     test("opcode length", () =>
       expect(Array.length(adc.opcodes)) == 8
     );
+
+    test("access_pattern", () =>
+      expect(adc.access_pattern) == Instruction.Read
+    );
   });
 
   describe("jmp", () => {
@@ -63,6 +67,10 @@ describe("Instruction", () => {
              addressing_mode: Opcode.Indirect,
            },
          |]
+    );
+
+    test("access_pattern", () =>
+      expect(jmp.access_pattern) == Instruction.Jump 
     );
   });
 });
