@@ -25,6 +25,13 @@ let build = memory => {
   };
 };
 
+let check_overflow = (result, acc, arg)  => {
+  let result_sign = Util.read_bit(result, 7);
+  let acc_sign = Util.read_bit(acc, 7);
+  let arg_sign = Util.read_bit(arg, 7);
+  !(result_sign == acc_sign || result_sign == arg_sign)
+}
+
 let copy = cpu => {
   ...cpu,
   memory: Memory.copy(cpu.memory),
@@ -66,6 +73,16 @@ let stack_push = (cpu: t, value: int) => {
   Memory.set_byte(cpu.memory, 0x100 + cpu.stack, value);
   cpu.stack = cpu.stack - 1;
 };
+
+let add_with_carry = (cpu, argument) => {
+  let carry_bit = Flag.Register.to_int(cpu.status) land 1;
+  let result = cpu.acc + argument + carry_bit;
+  Flag.Register.set(cpu.status, Flag.Overflow, check_overflow(result, cpu.acc, argument));
+  Flag.Register.set(cpu.status, Flag.Carry, result > 0xff);
+  cpu.acc = result land 0xff;
+
+  set_flags_zn(cpu, cpu.acc);
+}
 
 let and_with_acc = (cpu, argument) => {
   cpu.acc = cpu.acc land argument;
@@ -185,6 +202,7 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
 
   let operation =
     switch (definition.label) {
+    | "adc" => add_with_carry
     | "and" => and_with_acc
     | "bcc" => branch_on_flag(Flag.Carry, false)
     | "bcs" => branch_on_flag(Flag.Carry, true)
