@@ -1,6 +1,6 @@
 module Opcodes =
   Map.Make({
-    type t = char;
+    type t = Opcode.code;
     let compare = compare;
   });
 
@@ -23,7 +23,7 @@ let format =
     )
     : string => {
   let hstart = to_hex(start);
-  let hcode = to_hex(Char.code(opcode.code));
+  let hcode = to_hex(opcode.code);
   let hargs =
     Array.fold_left((acc, arg) => acc ++ " " ++ to_hex(arg), "", args)
     |> String.trim
@@ -40,7 +40,7 @@ let make = (instructions: array(Instruction.t), memory: Memory.t) => {
     if (length == 0) {
       "";
     } else {
-      let code = Memory.get_byte(memory, start) |> Char.chr;
+      let code = Memory.get_byte(memory, start);
       let (instruction, opcode) = Opcodes.find(code, opcodes);
       let args =
         Array.init(opcode.length - 1, n =>

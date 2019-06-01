@@ -55,14 +55,9 @@ describe("Instruction", () => {
     test("opcodes", () =>
       expect(jmp.opcodes)
       == [|
+           {code: 76, length: 3, timing: 3, addressing_mode: Opcode.Absolute},
            {
-             code: Char.chr(76),
-             length: 3,
-             timing: 3,
-             addressing_mode: Opcode.Absolute,
-           },
-           {
-             code: Char.chr(108),
+             code: 108,
              length: 3,
              timing: 5,
              addressing_mode: Opcode.Indirect,

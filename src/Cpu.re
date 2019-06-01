@@ -1,4 +1,4 @@
-type cpu = {
+type t = {
   memory: Memory.memory,
   mutable cycles: int,
   mutable x: int,
@@ -8,6 +8,18 @@ type cpu = {
   mutable status: int,
   mutable pc: int,
 };
+
+type cpu = t;
+
+module InstructionTable =
+  Map.Make({
+    type t = Opcode.code;
+    let compare = compare;
+  });
+
+exception AddressingModeNotImplemented(Opcode.addressing_mode);
+exception InstructionNotImplemented(string);
+exception OpcodeNotFound(int);
 
 let build = memory => {
   {memory, cycles: 0, x: 0, y: 0, acc: 0, stack: 253, status: 36, pc: 0xfffc};
@@ -43,19 +55,56 @@ let debug_log = cpu => {
   );
 };
 
-exception InstructionNotImplemented(int);
-
-let jump = cpu => {
-  cpu.pc = Memory.get_word(cpu.memory, cpu.pc);
-  cpu.cycles = cpu.cycles + 3;
+let jump = (cpu, argument) => {
+  cpu.pc = argument;
 };
 
+let get_argument = (cpu: t, mode: Opcode.addressing_mode) => {
+  switch (mode) {
+  | Absolute => Memory.get_word(cpu.memory, cpu.pc)
+  | _ => raise(AddressingModeNotImplemented(mode))
+  };
+};
+
+let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
+  let argument = get_argument(cpu, opcode.addressing_mode);
+
+  let operation =
+    switch (definition.label) {
+    | "jmp" => jump
+    | _ => raise(InstructionNotImplemented(definition.label))
+    };
+
+  operation(cpu, argument);
+
+  cpu.cycles = cpu.cycles + opcode.timing;
+};
+
+let add_instructions = (definition: Instruction.t) =>
+  Array.fold_right(
+    opcode =>
+      InstructionTable.add(
+        (opcode: Opcode.t).code,
+        handle(definition, opcode),
+      ),
+    definition.opcodes,
+  );
+
+let table: InstructionTable.t(t => unit) =
+  Array.fold_right(
+    add_instructions,
+    Instruction.load(Util.expand_path("src/instructions.json")),
+    InstructionTable.empty,
+  );
+
 let step = cpu => {
-  let instruction = Memory.get_byte(cpu.memory, cpu.pc);
+  let opcode = Memory.get_byte(cpu.memory, cpu.pc);
   cpu.pc = cpu.pc + 1;
 
-  switch (instruction) {
-  | 0x4c => jump(cpu)
-  | _ => raise(InstructionNotImplemented(instruction))
+  switch (InstructionTable.find(opcode, table)) {
+  | command => command(cpu)
+  | exception Not_found => raise(OpcodeNotFound(opcode))
   };
+
+  ();
 };
