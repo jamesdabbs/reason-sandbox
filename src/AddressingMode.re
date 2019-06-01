@@ -13,6 +13,7 @@ type t =
   | ZeroPageY
   | Implicit;
 
+exception NotImplemented(t);
 exception Unrecognized(string);
 
 let inspect = (mode: t) => {
@@ -52,5 +53,16 @@ let decode = (json: Js.Json.t): t => {
     | "zeroPageY" => ZeroPageY
     | _ => raise(Unrecognized(value))
     }
+  };
+};
+
+let get_argument = (cpu: Types.cpu, mode: t) => {
+  switch (mode) {
+  | Immediate => Memory.get_byte(cpu.memory, cpu.pc)
+  | Absolute => Memory.get_word(cpu.memory, cpu.pc)
+  | ZeroPage =>
+    let addr = Memory.get_byte(cpu.memory, cpu.pc);
+    Memory.get_byte(cpu.memory, addr);
+  | _ => raise(NotImplemented(mode))
   };
 };

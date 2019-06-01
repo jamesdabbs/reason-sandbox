@@ -87,7 +87,7 @@ describe("CPU", () => {
       let path = Util.expand_path("__tests__/roms/nestest.log");
       let log = Node.Fs.readFileSync(path, `utf8);
       let lines = Js.String.split("\n", log);
-      let target = "C5F9";
+      let target = "C52D";
       let log_at = line => Js.String2.startsWith(line, target);
       let target_log = Js.Array.find(log_at, lines) |> Util.default("");
 

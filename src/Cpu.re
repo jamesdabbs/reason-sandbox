@@ -1,13 +1,6 @@
-type t = {
-  memory: Memory.t,
-  status: Flag.Register.t,
-  mutable cycles: int,
-  mutable x: int,
-  mutable y: int,
-  mutable acc: int,
-  mutable stack: int,
-  mutable pc: int,
-};
+open Types;
+
+type t = cpu;
 
 module InstructionTable =
   Map.Make({
@@ -72,12 +65,8 @@ let load_x = (cpu, argument) => {
   set_flags_zn(cpu, cpu.x);
 };
 
-let get_argument = (cpu: t, mode: AddressingMode.t) => {
-  switch (mode) {
-  | Immediate => Memory.get_byte(cpu.memory, cpu.pc)
-  | Absolute => Memory.get_word(cpu.memory, cpu.pc)
-  | _ => raise(AddressingModeNotImplemented(mode))
-  };
+let store_x = (cpu, argument) => {
+  Memory.set_byte(cpu.memory, argument, cpu.x);
 };
 
 let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
@@ -88,12 +77,13 @@ let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
 };
 
 let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
-  let argument = get_argument(cpu, opcode.addressing_mode);
+  let argument = AddressingMode.get_argument(cpu, opcode.addressing_mode);
 
   let operation =
     switch (definition.label) {
     | "jmp" => jump
     | "ldx" => load_x
+    | "stx" => store_x
     | _ => raise(InstructionNotImplemented(definition.label))
     };
 
@@ -132,7 +122,7 @@ let step = (cpu: t): option(error) => {
   switch (InstructionTable.find(opcode, table)) {
   | command =>
     switch (command(cpu)) {
-    | exception (AddressingModeNotImplemented(mode)) =>
+    | exception (AddressingMode.NotImplemented(mode)) =>
       Some(AddressingModeNotImplemented(mode))
     | exception (InstructionNotImplemented(ins)) =>
       Some(InstructionNotImplemented(ins))
