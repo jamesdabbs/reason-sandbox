@@ -94,23 +94,33 @@ describe("CPU", () => {
 
       let rec run = index => {
         let line = lines[index];
-        if (tracing) {
-          trace(line);
-        };
 
-        let actual = Cpu.debug_log(cpu);
-        if (actual != line) {
-          raise(LinesDoNotMatch(actual, line));
-        } else if (cpu.pc == int_of_string("0x" ++ target)) {
-          ();
-        } else {
-          Cpu.step(cpu);
+        let previous_pc = cpu.pc;
+        let before = Cpu.debug_log(cpu);
+        Cpu.step(cpu);
+        let after = Cpu.debug_log(cpu);
+
+        if (after != line) {
+          let dis = disasm(previous_pc, 1);
+          Js.log(
+            {j|
+            Previous: $before
+            Expected: $line
+            Actual:   $after
+            Disassembly: $dis
+          |j},
+          );
+          raise(LinesDoNotMatch(after, line));
+        } else if (cpu.pc != int_of_string("0x" ++ target)) {
+          if (tracing) {
+            trace(after);
+          };
           run(index + 1);
         };
       };
 
       expect(() =>
-        run(0)
+        run(1)
       ) |> not_ |> toThrow;
     });
   });

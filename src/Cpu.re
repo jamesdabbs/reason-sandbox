@@ -74,8 +74,22 @@ let stack_push = (cpu: t, value: int) => {
   cpu.stack = cpu.stack - 1;
 };
 
+let subtract_with_borrow = (cpu, argument) => {
+  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 0 : 1;
+  let result = cpu.acc - argument - carry_bit;
+  Flag.Register.set(
+    cpu.status,
+    Flag.Overflow,
+    check_overflow(result, cpu.acc, argument),
+  );
+  Flag.Register.set(cpu.status, Flag.Carry, result >= 0);
+  cpu.acc = result land 0xff;
+
+  set_flags_zn(cpu, cpu.acc);
+};
+
 let add_with_carry = (cpu, argument) => {
-  let carry_bit = Flag.Register.to_int(cpu.status) land 1;
+  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 1 : 0;
   let result = cpu.acc + argument + carry_bit;
   Flag.Register.set(
     cpu.status,
@@ -256,6 +270,7 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | "pla" => pop_acc
     | "plp" => pop_status
     | "rts" => return_from_subroutine
+    | "sbc" => subtract_with_borrow
     | "sec" => set_flag(Flag.Carry, true)
     | "sed" => set_flag(Flag.Decimal, true)
     | "sei" => set_flag(Flag.InterruptDisable, true)
