@@ -58,6 +58,7 @@ let decode = (json: Js.Json.t): t => {
 
 let get_argument = (cpu: Types.cpu, mode: t) => {
   switch (mode) {
+  | Implicit => 0
   | Immediate => Memory.get_byte(cpu.memory, cpu.pc)
   | Absolute => Memory.get_word(cpu.memory, cpu.pc)
   | ZeroPage =>

@@ -77,6 +77,14 @@ let load_x = (cpu, argument) => {
   set_flags_zn(cpu, cpu.x);
 };
 
+let nop = (_cpu, _argument) => {
+  ();
+}
+
+let set_carry = (cpu, _argument) => {
+  set_flag(cpu, Flag.Carry, true);
+}
+
 let store_x = (cpu, argument) => {
   Memory.set_byte(cpu.memory, argument, cpu.x);
 };
@@ -93,9 +101,11 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
 
   let operation =
     switch (definition.label) {
-    | "jsr" => jump_subroutine
     | "jmp" => jump
+    | "jsr" => jump_subroutine
     | "ldx" => load_x
+    | "nop" => nop
+    | "sec" => set_carry
     | "stx" => store_x
     | _ => raise(InstructionNotImplemented(definition.label))
     };
