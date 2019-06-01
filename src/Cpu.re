@@ -83,6 +83,7 @@ let branch_on_flag = (flag, expected, cpu, argument) =>
 
 let compare = (cpu, argument) => {
   set_flags_zn(cpu, cpu.acc - argument);
+  Flag.Register.set(cpu.status, Flag.Carry, cpu.acc >= argument);
 };
 
 let jump = (cpu, argument) => {
@@ -114,18 +115,29 @@ let nop = (_cpu, _argument) => {
   ();
 };
 
+let or_with_acc = (cpu, argument) => {
+  cpu.acc = cpu.acc lor argument;
+  set_flags_zn(cpu, cpu.acc);
+}
+
 let pop_acc = (cpu, _argument) => {
   cpu.acc = stack_pop(cpu);
 
   set_flags_zn(cpu, cpu.acc);
 };
 
+let pop_status = (cpu, _argument) => {
+  // See https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
+  cpu.status = Flag.Register.from_int(stack_pop(cpu) lor 0x20 land 0xef);
+}
+
+let push_acc = (cpu, _argument) => {
+  stack_push(cpu, cpu.acc);
+}
+
 let push_status = (cpu, _argument) => {
   // See https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
-  stack_push(
-    cpu,
-    Flag.Register.to_int(cpu.status) lor 0x10,
-  );
+  stack_push(cpu, Flag.Register.to_int(cpu.status) lor 0x10);
 };
 
 let return_from_subroutine = (cpu, _argument) => {
@@ -148,6 +160,11 @@ let test_bits = (cpu, argument) => {
   Flag.Register.set(cpu.status, Flag.Overflow, Util.read_bit(argument, 6));
   Flag.Register.set(cpu.status, Flag.Zero, argument land cpu.acc == 0);
 };
+
+let xor_with_acc = (cpu, argument) => {
+  cpu.acc = cpu.acc lxor argument;
+  set_flags_zn(cpu, cpu.acc);
+}
 
 let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
   switch (definition.access_pattern) {
@@ -173,20 +190,26 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | "bcs" => branch_on_flag(Flag.Carry, true)
     | "beq" => branch_on_flag(Flag.Zero, true)
     | "bit" => test_bits
+    | "bmi" => branch_on_flag(Flag.Negative, true)
     | "bne" => branch_on_flag(Flag.Zero, false)
     | "bpl" => branch_on_flag(Flag.Negative, false)
     | "bvc" => branch_on_flag(Flag.Overflow, false)
     | "bvs" => branch_on_flag(Flag.Overflow, true)
     | "clc" => set_flag(Flag.Carry, false)
     | "cld" => set_flag(Flag.Decimal, false)
+    | "clv" => set_flag(Flag.Overflow, false)
     | "cmp" => compare
+    | "eor" => xor_with_acc
     | "jmp" => jump
     | "jsr" => jump_subroutine
     | "lda" => load_acc
     | "ldx" => load_x
     | "nop" => nop
+    | "ora" => or_with_acc
+    | "pha" => push_acc
     | "php" => push_status
     | "pla" => pop_acc
+    | "plp" => pop_status
     | "rts" => return_from_subroutine
     | "sec" => set_flag(Flag.Carry, true)
     | "sed" => set_flag(Flag.Decimal, true)
