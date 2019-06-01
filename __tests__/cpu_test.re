@@ -21,6 +21,16 @@ describe("CPU", () => {
     );
   });
 
+  describe("copy", () =>
+    test("it makes a shallow copy", () => {
+      let a = Cpu.build(Memory.build(rom));
+      let b = Cpu.copy(a);
+
+      b.x = b.x + 1;
+
+      expect(a.x) |> not_ |> toEqual(b.x);
+    })
+  );
   describe("reset", () => {
     let cpu = Cpu.copy(initial);
     Cpu.reset(cpu);

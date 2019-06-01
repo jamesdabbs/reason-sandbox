@@ -23,18 +23,7 @@ let build = memory => {
   {memory, cycles: 0, x: 0, y: 0, acc: 0, stack: 253, status: 36, pc: 0xfffc};
 };
 
-let copy = cpu => {
-  {
-    memory: cpu.memory,
-    cycles: cpu.cycles,
-    x: cpu.x,
-    y: cpu.y,
-    acc: cpu.acc,
-    stack: cpu.stack,
-    status: cpu.status,
-    pc: cpu.pc,
-  };
-};
+let copy = cpu => {...cpu, pc: cpu.pc};
 
 let reset = cpu => {
   cpu.pc = Memory.get_word(cpu.memory, cpu.pc);
@@ -59,7 +48,7 @@ let jump = (cpu, argument) => {
 
 let load_x = (cpu, argument) => {
   cpu.x = argument;
-}
+};
 
 let get_argument = (cpu: t, mode: Opcode.addressing_mode) => {
   switch (mode) {
