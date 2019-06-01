@@ -24,3 +24,8 @@ let show_hex = (string: string) => {
 let expand_path = (path: string) => {
   Node.Path.resolve(__dirname, "../" ++ path);
 };
+
+let read_bit = (value: int, index: int): bool => {
+  let mask = 1 lsl index;
+  value land mask == mask;
+};

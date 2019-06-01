@@ -55,12 +55,21 @@ let debug_log = cpu => {
   );
 };
 
+let set_flag = (cpu: t) => Flag.Register.set(cpu.status);
+
+let set_flags_zn = (cpu: t, value: int) => {
+  set_flag(cpu, Flag.Zero, value == 0);
+  set_flag(cpu, Flag.Negative, Util.read_bit(value, 7));
+};
+
 let jump = (cpu, argument) => {
   cpu.pc = argument;
 };
 
 let load_x = (cpu, argument) => {
   cpu.x = argument;
+
+  set_flags_zn(cpu, cpu.x);
 };
 
 let get_argument = (cpu: t, mode: Opcode.addressing_mode) => {

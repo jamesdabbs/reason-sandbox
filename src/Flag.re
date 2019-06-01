@@ -25,13 +25,7 @@ module Register = {
   let copy = Array.copy;
 
   let from_int = (value: int): t => {
-    Array.init(
-      8,
-      index => {
-        let mask = 1 lsl index;
-        value land mask == mask;
-      },
-    );
+    Array.init(8, index => Util.read_bit(value, index));
   };
 
   let to_int = (register: t): int => {
