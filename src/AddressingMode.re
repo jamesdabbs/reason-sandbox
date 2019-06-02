@@ -40,7 +40,7 @@ let decode = (json: Js.Json.t): t => {
   | Some(value) =>
     switch (value) {
     | "absolute" => Absolute
-    | "absoluteX" => AbsoluteY
+    | "absoluteX" => AbsoluteX
     | "absoluteY" => AbsoluteY
     | "accumulator" => Accumulator
     | "immediate" => Immediate
