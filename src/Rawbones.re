@@ -1,1 +1,0 @@
-let hello = () => Js.log("hello");

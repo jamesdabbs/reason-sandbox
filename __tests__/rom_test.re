@@ -5,7 +5,7 @@ open! Expect.Operators;
 describe("Demo", () =>
   describe("parse_rom", () => {
     describe("aorom", () => {
-      let rom = Rom.parse(Spec.rom_path("aorom"));
+      let rom = Spec.rom("aorom");
 
       test("pathname", () =>
         expect(rom.pathname) === Spec.rom_path("aorom")
@@ -21,7 +21,7 @@ describe("Demo", () =>
     });
 
     describe("nestest", () => {
-      let rom = Rom.parse(Spec.rom_path("nestest"));
+      let rom = Spec.rom("nestest");
 
       test("pathname", () =>
         expect(rom.pathname) === Spec.rom_path("nestest")

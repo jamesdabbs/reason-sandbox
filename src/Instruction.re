@@ -39,8 +39,6 @@ let decode = (json: Js.Json.t): t => {
   };
 };
 
-let load = (path: string): array(t) => {
-  Node.Fs.readFileSync(path, `binary)
-  |> Json.parseOrRaise
-  |> Json.Decode.array(decode);
-};
+[@bs.module] external raw: Js.Json.t = "./instructions.json";
+
+let all: array(t) = Json.Decode.array(decode, raw);

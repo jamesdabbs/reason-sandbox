@@ -403,11 +403,7 @@ let add_instruction = (definition: Instruction.t) =>
   );
 
 let table: InstructionTable.t(t => unit) =
-  Array.fold_right(
-    add_instruction,
-    Instruction.load(Util.expand_path("src/instructions.json")),
-    InstructionTable.empty,
-  );
+  Array.fold_right(add_instruction, Instruction.all, InstructionTable.empty);
 
 type error =
   | AddressingModeNotImplemented(AddressingMode.t)

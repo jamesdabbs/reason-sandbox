@@ -10,7 +10,7 @@ type mirroring =
   | Horizontal
   | Vertical;
 
-type rom = {
+type t = {
   pathname: string,
   prg: bytes,
   chr: bytes,
@@ -23,6 +23,8 @@ type rom = {
   mapper,
 };
 
+type rom = t;
+
 let check_header = (rom: bytes) => {
   let header = Bytes.sub(rom, 0, 4);
 
@@ -31,8 +33,7 @@ let check_header = (rom: bytes) => {
   };
 };
 
-let parse = (path: string): rom => {
-  let contents = Bytes.of_string(Node.Fs.readFileSync(path, `binary));
+let parse = (path: string, contents: bytes): rom => {
   let byte_at = index => Char.code(Bytes.get(contents, index));
   check_header(contents);
 
