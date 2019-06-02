@@ -36,4 +36,10 @@ describe("Memory", () => {
 
     expect(word) == 0xc004;
   });
+
+  test("it can fetch a word with the page wraparound quirk", () => {
+    let word = Memory.get_indirect(memory, 0xffff);
+
+    expect(word) == 197;
+  });
 });
