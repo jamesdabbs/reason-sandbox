@@ -205,11 +205,47 @@ let push_status = (cpu, _argument) => {
   );
 };
 
+let return_from_interrupt =  (cpu, _argument) => {
+  cpu.status =  Flag.Register.from_int(stack_pop(cpu) lor 0x20 land 0xef);
+  let low = stack_pop(cpu);
+  let high = stack_pop(cpu);
+
+  cpu.pc = high lsl 8 + low;
+};
+
 let return_from_subroutine = (cpu, _argument) => {
   let low = stack_pop(cpu);
   let high = stack_pop(cpu);
 
   cpu.pc = high lsl 8 + low + 1;
+};
+
+let rotate_left = (cpu, _argument) => {
+  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 1 : 0;
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(cpu.acc, 7));
+
+  cpu.acc = cpu.acc lsl 1 lor carry_bit land 0xff;
+  set_flags_zn(cpu, cpu.acc);
+};
+
+let rotate_right = (cpu, _argument) => {
+  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 0x80 : 0;
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(cpu.acc, 0));
+
+  cpu.acc = cpu.acc lsr 1 lor carry_bit land 0xff;
+  set_flags_zn(cpu, cpu.acc);
+};
+
+let shift_left = (cpu, _argument) => {
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(cpu.acc, 7));
+  cpu.acc = cpu.acc lsl 1 land 0xff;
+  set_flags_zn(cpu, cpu.acc);
+};
+
+let shift_right = (cpu, _argument) => {
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(cpu.acc, 0));
+  cpu.acc = cpu.acc lsr 1;
+  set_flags_zn(cpu, cpu.acc);
 };
 
 let store_acc = (cpu, argument) => {
@@ -295,6 +331,7 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     switch (definition.label) {
     | "adc" => add_with_carry
     | "and" => and_with_acc
+    | "asl" => shift_left
     | "bcc" => branch_on_flag(Flag.Carry, false)
     | "bcs" => branch_on_flag(Flag.Carry, true)
     | "beq" => branch_on_flag(Flag.Zero, true)
@@ -320,12 +357,16 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | "lda" => load_acc
     | "ldx" => load_x
     | "ldy" => load_y
+    | "lsr" => shift_right
     | "nop" => nop
     | "ora" => or_with_acc
     | "pha" => push_acc
     | "php" => push_status
     | "pla" => pop_acc
     | "plp" => pop_status
+    | "ror" => rotate_right
+    | "rol" => rotate_left
+    | "rti" => return_from_interrupt
     | "rts" => return_from_subroutine
     | "sbc" => subtract_with_borrow
     | "sec" => set_flag(Flag.Carry, true)

@@ -59,6 +59,7 @@ let decode = (json: Js.Json.t): t => {
 let get_address = (cpu: Types.cpu, mode: t) => {
   switch (mode) {
   | Implicit => 0
+  | Accumulator => cpu.acc
   | Immediate => cpu.pc
   | Absolute => Memory.get_word(cpu.memory, cpu.pc)
   | ZeroPage => Memory.get_byte(cpu.memory, cpu.pc)
