@@ -345,14 +345,15 @@ let rmw_update = (opcode: Opcode.t, address) => {
 };
 
 let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
-  let address = AddressingMode.get_address(cpu, opcode.addressing_mode);
+  open AddressingMode;
+  let address = get_address(cpu, opcode.addressing_mode);
 
   let operand =
     switch (definition.access_pattern, opcode.addressing_mode) {
     | (Instruction.Static, _) => 0
     | (Instruction.Write, _) => address
     | (Instruction.Jump, _) => address
-    | (Instruction.ReadModifyWrite, AddressingMode.Accumulator) => address
+    | (Instruction.ReadModifyWrite, Accumulator) => address
     | _ => Memory.get_byte(cpu.memory, address)
     };
 
