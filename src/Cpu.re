@@ -43,6 +43,10 @@ let build = memory => {
 let x = (cpu => cpu.x, (x, cpu) => cpu.x = x);
 let y = (cpu => cpu.y, (y, cpu) => cpu.y = y);
 let acc = (cpu => cpu.acc, (acc, cpu) => cpu.acc = acc);
+let memory = address => (
+  cpu => Memory.get_byte(cpu.memory, address),
+  (value, cpu) => Memory.set_byte(cpu.memory, address, value),
+);
 
 let check_overflow = (result, acc, arg) => {
   let result_sign = Util.read_bit(result, 7);
@@ -127,24 +131,12 @@ let compare = (location, cpu, argument) => {
   Register.set(cpu.status, Carry, value >= argument);
 };
 
-let decrement = (update, cpu, argument) => {
-  let result = argument == 0 ? 0xff : argument - 1;
-  update(cpu, result);
-  set_flags_zn(cpu, result);
-};
-
-let decrementl = (location, cpu, _) => {
+let decrement = (location, cpu, _) => {
   Lens.apply(location, cpu, value => value == 0 ? 0xff : value - 1)
   |> set_flags_zn(cpu);
 };
 
-let increment = (update, cpu, argument) => {
-  let result = (argument + 1) land 0xff;
-  update(cpu, result);
-  set_flags_zn(cpu, result);
-};
-
-let incrementl = (location, cpu, _) => {
+let increment = (location, cpu, _) => {
   Lens.apply(location, cpu, value => (value + 1) land 0xff)
   |> set_flags_zn(cpu);
 };
@@ -215,35 +207,35 @@ let return_from_subroutine = (cpu, _argument) => {
   cpu.pc = high lsl 8 + low + 1;
 };
 
-let rotate_left = (update, cpu, argument) => {
+let rotate_left = (location, cpu, argument) => {
   let carry_bit = Register.get(cpu.status, Carry) ? 1 : 0;
   Register.set(cpu.status, Carry, Util.read_bit(argument, 7));
 
   let result = argument lsl 1 lor carry_bit land 0xff;
-  update(cpu, result);
+  Lens.set(location, result, cpu);
   set_flags_zn(cpu, result);
 };
 
-let rotate_right = (update, cpu, argument) => {
+let rotate_right = (location, cpu, argument) => {
   let carry_bit = Register.get(cpu.status, Carry) ? 0x80 : 0;
   Register.set(cpu.status, Carry, Util.read_bit(argument, 0));
 
   let result = argument lsr 1 lor carry_bit land 0xff;
-  update(cpu, result);
+  Lens.set(location, result, cpu);
   set_flags_zn(cpu, result);
 };
 
-let shift_left = (update, cpu, argument) => {
+let shift_left = (location, cpu, argument) => {
   Register.set(cpu.status, Carry, Util.read_bit(argument, 7));
   let result = argument lsl 1 land 0xff;
-  update(cpu, result);
+  Lens.set(location, result, cpu);
   set_flags_zn(cpu, result);
 };
 
-let shift_right = (update, cpu, argument) => {
+let shift_right = (location, cpu, argument) => {
   Register.set(cpu.status, Carry, Util.read_bit(argument, 0));
   let result = argument lsr 1;
-  update(cpu, result);
+  Lens.set(location, result, cpu);
   set_flags_zn(cpu, result);
 };
 
@@ -298,10 +290,10 @@ let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
   };
 };
 
-let rmw_update = (opcode: Opcode.t, address) => {
+let rmw_update = (opcode: Opcode.t, address): Lens.t(cpu, int) => {
   switch (opcode.addressing_mode) {
-  | AddressingMode.Accumulator => ((cpu: t, value) => cpu.acc = value)
-  | _ => ((cpu: t, value) => Memory.set_byte(cpu.memory, address, value))
+  | AddressingMode.Accumulator => acc
+  | _ => memory(address)
   };
 };
 
@@ -356,12 +348,12 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu) => {
     | "cpx" => compare(x)
     | "cpy" => compare(y)
     | "dec" => decrement(rmw_update(opcode, address))
-    | "dex" => decrementl(x)
-    | "dey" => decrementl(y)
+    | "dex" => decrement(x)
+    | "dey" => decrement(y)
     | "eor" => xor_with_acc
     | "inc" => increment(rmw_update(opcode, address))
-    | "inx" => incrementl(x)
-    | "iny" => incrementl(y)
+    | "inx" => increment(x)
+    | "iny" => increment(y)
     | "jmp" => jump
     | "jsr" => jump_subroutine
     | "lda" => load(acc)
