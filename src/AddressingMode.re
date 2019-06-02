@@ -71,6 +71,8 @@ let get_address = (cpu: Types.cpu, mode: t) => {
   | Accumulator => cpu.acc
   | Immediate => cpu.pc
   | ZeroPage => get_byte(cpu.memory, cpu.pc)
+  | ZeroPageX => (get_byte(cpu.memory, cpu.pc) + cpu.x) land 0xff
+  | ZeroPageY => (get_byte(cpu.memory, cpu.pc) + cpu.y) land 0xff
   | Absolute => get_word(cpu.memory, cpu.pc)
   | AbsoluteX =>
   let start = get_word(cpu.memory, cpu.pc);
@@ -95,6 +97,5 @@ let get_address = (cpu: Types.cpu, mode: t) => {
     } else {
       cpu.pc + offset + 1;
     };
-  | _ => raise(NotImplemented(mode))
   };
 };
