@@ -236,16 +236,18 @@ let rotate_right = (cpu, _argument) => {
   set_flags_zn(cpu, cpu.acc);
 };
 
-let shift_left = (cpu, _argument) => {
-  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(cpu.acc, 7));
-  cpu.acc = cpu.acc lsl 1 land 0xff;
-  set_flags_zn(cpu, cpu.acc);
+let shift_left = (update, cpu, argument) => {
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 7));
+  let result = argument lsl 1 land 0xff;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
 };
 
-let shift_right = (cpu, _argument) => {
-  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(cpu.acc, 0));
-  cpu.acc = cpu.acc lsr 1;
-  set_flags_zn(cpu, cpu.acc);
+let shift_right = (update, cpu, argument) => {
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 0));
+  let result = argument lsr 1;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
 };
 
 let store_acc = (cpu, argument) => {
@@ -321,21 +323,30 @@ let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
   };
 };
 
+let rmw_update = (opcode: Opcode.t, address) => {
+  switch (opcode.addressing_mode) {
+  | AddressingMode.Accumulator => (cpu: t, value) => cpu.acc = value
+  | _ => (cpu: t, value) => Memory.set_byte(cpu.memory, address, value)
+  };
+};
+
 let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
   let address = AddressingMode.get_address(cpu, opcode.addressing_mode);
 
   let operand =
-    switch (definition.access_pattern) {
-    | Instruction.Read => Memory.get_byte(cpu.memory, address)
-    | Instruction.Static => 0
-    | _ => address
+    switch (definition.access_pattern, opcode.addressing_mode) {
+    | (Instruction.Static, _) => 0
+    | (Instruction.Write, _) => address
+    | (Instruction.Jump, _) => address
+    | (Instruction.ReadModifyWrite, AddressingMode.Accumulator) => address
+    | _ => Memory.get_byte(cpu.memory, address)
     };
 
   let operation =
     switch (definition.label) {
     | "adc" => add_with_carry
     | "and" => and_with_acc
-    | "asl" => shift_left
+    | "asl" => shift_left(rmw_update(opcode, address))
     | "bcc" => branch_on_flag(Flag.Carry, false)
     | "bcs" => branch_on_flag(Flag.Carry, true)
     | "beq" => branch_on_flag(Flag.Zero, true)
@@ -361,7 +372,7 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | "lda" => load_acc
     | "ldx" => load_x
     | "ldy" => load_y
-    | "lsr" => shift_right
+    | "lsr" => shift_right(rmw_update(opcode, address))
     | "nop" => nop
     | "ora" => or_with_acc
     | "pha" => push_acc
