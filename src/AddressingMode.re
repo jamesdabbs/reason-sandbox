@@ -57,17 +57,19 @@ let decode = (json: Js.Json.t): t => {
 };
 
 let get_address = (cpu: Types.cpu, mode: t) => {
+  open Memory;
+
   switch (mode) {
   | Implicit => 0
   | Accumulator => cpu.acc
   | Immediate => cpu.pc
-  | ZeroPage => Memory.get_byte(cpu.memory, cpu.pc)
-  | Absolute => Memory.get_word(cpu.memory, cpu.pc)
+  | ZeroPage => get_byte(cpu.memory, cpu.pc)
+  | Absolute => get_word(cpu.memory, cpu.pc)
   | IndirectX =>
-    let start = Memory.get_byte(cpu.memory, cpu.pc) + cpu.x;
-    Memory.get_indirect(cpu.memory, start land 0xff);
+    let start = get_byte(cpu.memory, cpu.pc) + cpu.x;
+    get_indirect(cpu.memory, start land 0xff);
   | Relative =>
-    let offset = Memory.get_byte(cpu.memory, cpu.pc);
+    let offset = get_byte(cpu.memory, cpu.pc);
     if (Util.read_bit(offset, 7)) {
       cpu.pc - offset lxor 0xff;
     } else {
