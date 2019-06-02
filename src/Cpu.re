@@ -256,6 +256,10 @@ let store_x = (cpu, argument) => {
   Memory.set_byte(cpu.memory, argument, cpu.x);
 };
 
+let store_y = (cpu, argument) => {
+  Memory.set_byte(cpu.memory, argument, cpu.y);
+};
+
 let subtract_with_borrow = (cpu, argument) => {
   let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 0 : 1;
   let result = cpu.acc - argument - carry_bit;
@@ -374,6 +378,7 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | "sei" => set_flag(Flag.InterruptDisable, true)
     | "sta" => store_acc
     | "stx" => store_x
+    | "sty" => store_y
     | "tax" => transfer_acc_to_x
     | "tay" => transfer_acc_to_y
     | "tsx" => transfer_stack_to_x
