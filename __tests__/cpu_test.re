@@ -86,7 +86,7 @@ describe("CPU", () => {
     };
 
     test("runs legal opcodes successfully", () => {
-      let target = "CF00";
+      let target = "D1DA";
       let tracing = false;
 
       let path = Util.expand_path("__tests__/roms/nestest.log");
