@@ -117,6 +117,12 @@ let compare_y = (cpu, argument) => {
   Flag.Register.set(cpu.status, Flag.Carry, cpu.y >= argument);
 };
 
+let decrement = (update, cpu, argument) => {
+  let result = argument == 0 ? 0xff : argument - 1;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
+};
+
 let decrement_x = (cpu, _argument) => {
   cpu.x = cpu.x == 0 ? 0xff : cpu.x - 1;
 
@@ -127,6 +133,12 @@ let decrement_y = (cpu, _argument) => {
   cpu.y = cpu.y == 0 ? 0xff : cpu.y - 1;
 
   set_flags_zn(cpu, cpu.y);
+};
+
+let increment = (update, cpu, argument) => {
+  let result = (argument + 1) land 0xff;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
 };
 
 let increment_x = (cpu, _argument) => {
@@ -220,20 +232,22 @@ let return_from_subroutine = (cpu, _argument) => {
   cpu.pc = high lsl 8 + low + 1;
 };
 
-let rotate_left = (cpu, _argument) => {
+let rotate_left = (update, cpu, argument) => {
   let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 1 : 0;
-  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(cpu.acc, 7));
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 7));
 
-  cpu.acc = cpu.acc lsl 1 lor carry_bit land 0xff;
-  set_flags_zn(cpu, cpu.acc);
+  let result = argument lsl 1 lor carry_bit land 0xff;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
 };
 
-let rotate_right = (cpu, _argument) => {
+let rotate_right = (update, cpu, argument) => {
   let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 0x80 : 0;
-  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(cpu.acc, 0));
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 0));
 
-  cpu.acc = cpu.acc lsr 1 lor carry_bit land 0xff;
-  set_flags_zn(cpu, cpu.acc);
+  let result = argument lsr 1 lor carry_bit land 0xff;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
 };
 
 let shift_left = (update, cpu, argument) => {
@@ -362,9 +376,11 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | "cmp" => compare_acc
     | "cpx" => compare_x
     | "cpy" => compare_y
+    | "dec" => decrement(rmw_update(opcode, address))
     | "dex" => decrement_x
     | "dey" => decrement_y
     | "eor" => xor_with_acc
+    | "inc" => increment(rmw_update(opcode, address))
     | "inx" => increment_x
     | "iny" => increment_y
     | "jmp" => jump
@@ -379,8 +395,8 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | "php" => push_status
     | "pla" => pop_acc
     | "plp" => pop_status
-    | "ror" => rotate_right
-    | "rol" => rotate_left
+    | "ror" => rotate_right(rmw_update(opcode, address))
+    | "rol" => rotate_left(rmw_update(opcode, address))
     | "rti" => return_from_interrupt
     | "rts" => return_from_subroutine
     | "sbc" => subtract_with_borrow
