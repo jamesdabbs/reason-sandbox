@@ -13,26 +13,7 @@ type t =
   | ZeroPageY
   | Implicit;
 
-exception NotImplemented(t);
 exception Unrecognized(string);
-
-let inspect = (mode: t) => {
-  switch (mode) {
-  | Absolute => "absolute"
-  | AbsoluteX => "absoluteX"
-  | AbsoluteY => "absoluteY"
-  | Accumulator => "accumulator"
-  | Immediate => "immediate"
-  | Indirect => "indirect"
-  | IndirectX => "indirectX"
-  | IndirectY => "indirectY"
-  | Relative => "relative"
-  | ZeroPage => "zeroPage"
-  | ZeroPageX => "zeroPageX"
-  | ZeroPageY => "zeroPageY"
-  | Implicit => "implicit"
-  };
-};
 
 let decode = (json: Js.Json.t): t => {
   switch (Js.Json.decodeString(json)) {
