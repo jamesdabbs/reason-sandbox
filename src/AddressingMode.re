@@ -56,6 +56,13 @@ let decode = (json: Js.Json.t): t => {
   };
 };
 
+let maybe_update_cycle_count = (cpu: Types.cpu, start, final) => {
+  if (start land 0xff00 != final land 0xff00) {
+    cpu.cycles = cpu.cycles + 1;
+  }
+  final;
+};
+
 let get_address = (cpu: Types.cpu, mode: t) => {
   open Memory;
 
@@ -65,6 +72,14 @@ let get_address = (cpu: Types.cpu, mode: t) => {
   | Immediate => cpu.pc
   | ZeroPage => get_byte(cpu.memory, cpu.pc)
   | Absolute => get_word(cpu.memory, cpu.pc)
+  | AbsoluteX =>
+  let start = get_word(cpu.memory, cpu.pc);
+  let final = (start + cpu.x) land 0xffff;
+  maybe_update_cycle_count(cpu, start, final);
+  | AbsoluteY => 
+  let start = get_word(cpu.memory, cpu.pc);
+  let final = (start + cpu.y) land 0xffff;
+  maybe_update_cycle_count(cpu, start, final);
   | Indirect => get_indirect(cpu.memory, get_word(cpu.memory, cpu.pc));
   | IndirectX =>
     let start = get_byte(cpu.memory, cpu.pc) + cpu.x;
@@ -72,10 +87,7 @@ let get_address = (cpu: Types.cpu, mode: t) => {
   | IndirectY =>
     let start = get_indirect(cpu.memory, get_byte(cpu.memory, cpu.pc));
     let final = (start + cpu.y) land 0xffff;
-    if (start land 0xff00 != final land 0xff00) {
-      cpu.cycles = cpu.cycles + 1;
-    }
-    final;
+    maybe_update_cycle_count(cpu, start, final);
   | Relative =>
     let offset = get_byte(cpu.memory, cpu.pc);
     if (Util.read_bit(offset, 7)) {
