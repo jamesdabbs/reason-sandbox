@@ -271,14 +271,10 @@ let test_bits = (cpu, argument) => {
   Register.set(cpu.status, Zero, argument land cpu.acc == 0);
 };
 
-let transfer_acc_to_x = (cpu, _) => {
-  cpu.x = cpu.acc;
-  set_flags_zn(cpu, cpu.x);
-};
-
-let transfer_acc_to_y = (cpu, _) => {
-  cpu.y = cpu.acc;
-  set_flags_zn(cpu, cpu.y);
+let transfer = (from, to_, cpu, _) => {
+  let value = Lens.view(from, cpu);
+  Lens.set(to_, value, cpu);
+  set_flags_zn(cpu, value);
 };
 
 let transfer_stack_to_x = (cpu, _) => {
@@ -286,18 +282,8 @@ let transfer_stack_to_x = (cpu, _) => {
   set_flags_zn(cpu, cpu.x);
 };
 
-let transfer_x_to_acc = (cpu, _) => {
-  cpu.acc = cpu.x;
-  set_flags_zn(cpu, cpu.acc);
-};
-
 let transfer_x_to_stack = (cpu, _) => {
   cpu.stack = cpu.x;
-};
-
-let transfer_y_to_acc = (cpu, _) => {
-  cpu.acc = cpu.y;
-  set_flags_zn(cpu, cpu.acc);
 };
 
 let xor_with_acc = (cpu, argument) => {
@@ -399,12 +385,12 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu) => {
     | "sta" => store(acc)
     | "stx" => store(x)
     | "sty" => store(y)
-    | "tax" => transfer_acc_to_x
-    | "tay" => transfer_acc_to_y
+    | "tax" => transfer(acc, x)
+    | "tay" => transfer(acc, y)
     | "tsx" => transfer_stack_to_x
-    | "txa" => transfer_x_to_acc
+    | "txa" => transfer(x, acc)
     | "txs" => transfer_x_to_stack
-    | "tya" => transfer_y_to_acc
+    | "tya" => transfer(y, acc)
     | _ => raise(InstructionNotImplemented(definition.label))
     };
 
