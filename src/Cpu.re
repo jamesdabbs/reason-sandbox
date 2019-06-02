@@ -1,4 +1,5 @@
 open Types;
+open Flag;
 
 type t = cpu;
 
@@ -34,7 +35,7 @@ let build = memory => {
     y: 0,
     acc: 0,
     stack: 253,
-    status: Flag.Register.from_int(0b100100),
+    status: Register.from_int(0b100100),
     pc: 0xfffc,
   };
 };
@@ -53,7 +54,7 @@ let check_overflow = (result, acc, arg) => {
 let copy = cpu => {
   ...cpu,
   memory: Memory.copy(cpu.memory),
-  status: Flag.Register.copy(cpu.status),
+  status: Register.copy(cpu.status),
 };
 
 let reset = cpu => {
@@ -67,19 +68,19 @@ let debug_log = cpu => {
     cpu.acc,
     cpu.x,
     cpu.y,
-    Flag.Register.to_int(cpu.status),
+    Register.to_int(cpu.status),
     cpu.stack,
     cpu.cycles,
   );
 };
 
 let set_flag = (flag, value, cpu: t, _argument) => {
-  Flag.Register.set(cpu.status, flag, value);
+  Register.set(cpu.status, flag, value);
 };
 
 let set_flags_zn = (cpu: t, value: int) => {
-  Flag.Register.set(cpu.status, Flag.Zero, value == 0);
-  Flag.Register.set(cpu.status, Flag.Negative, Util.read_bit(value, 7));
+  Register.set(cpu.status, Zero, value == 0);
+  Register.set(cpu.status, Negative, Util.read_bit(value, 7));
 };
 
 let stack_pop = (cpu: t) => {
@@ -93,14 +94,14 @@ let stack_push = (cpu: t, value: int) => {
 };
 
 let add_with_carry = (cpu, argument) => {
-  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 1 : 0;
+  let carry_bit = Register.get(cpu.status, Carry) ? 1 : 0;
   let result = cpu.acc + argument + carry_bit;
-  Flag.Register.set(
+  Register.set(
     cpu.status,
-    Flag.Overflow,
+    Overflow,
     check_overflow(result, cpu.acc, argument),
   );
-  Flag.Register.set(cpu.status, Flag.Carry, result > 0xff);
+  Register.set(cpu.status, Carry, result > 0xff);
   cpu.acc = result land 0xff;
 
   set_flags_zn(cpu, cpu.acc);
@@ -113,7 +114,7 @@ let and_with_acc = (cpu, argument) => {
 };
 
 let branch_on_flag = (flag, expected, cpu, argument) =>
-  if (Flag.Register.get(cpu.status, flag) == expected) {
+  if (Register.get(cpu.status, flag) == expected) {
     cpu.cycles = cpu.cycles + 1;
     cpu.pc = argument;
   } else {
@@ -123,7 +124,7 @@ let branch_on_flag = (flag, expected, cpu, argument) =>
 let compare = (location, cpu, argument) => {
   let value = Lens.view(location, cpu);
   set_flags_zn(cpu, value - argument);
-  Flag.Register.set(cpu.status, Flag.Carry, value >= argument);
+  Register.set(cpu.status, Carry, value >= argument);
 };
 
 let decrement = (update, cpu, argument) => {
@@ -184,7 +185,7 @@ let pop_acc = (cpu, _argument) => {
 let pop_status = (cpu, _argument) => {
   // See https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
   cpu.status =
-    Flag.Register.from_int(stack_pop(cpu) lor 0x20 land 0xef);
+    Register.from_int(stack_pop(cpu) lor 0x20 land 0xef);
 };
 
 let push_acc = (cpu, _argument) => {
@@ -195,12 +196,12 @@ let push_status = (cpu, _argument) => {
   // See https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
   stack_push(
     cpu,
-    Flag.Register.to_int(cpu.status) lor 0x10,
+    Register.to_int(cpu.status) lor 0x10,
   );
 };
 
 let return_from_interrupt = (cpu, _argument) => {
-  cpu.status = Flag.Register.from_int(stack_pop(cpu) lor 0x20 land 0xef);
+  cpu.status = Register.from_int(stack_pop(cpu) lor 0x20 land 0xef);
   let low = stack_pop(cpu);
   let high = stack_pop(cpu);
 
@@ -215,8 +216,8 @@ let return_from_subroutine = (cpu, _argument) => {
 };
 
 let rotate_left = (update, cpu, argument) => {
-  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 1 : 0;
-  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 7));
+  let carry_bit = Register.get(cpu.status, Carry) ? 1 : 0;
+  Register.set(cpu.status, Carry, Util.read_bit(argument, 7));
 
   let result = argument lsl 1 lor carry_bit land 0xff;
   update(cpu, result);
@@ -224,8 +225,8 @@ let rotate_left = (update, cpu, argument) => {
 };
 
 let rotate_right = (update, cpu, argument) => {
-  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 0x80 : 0;
-  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 0));
+  let carry_bit = Register.get(cpu.status, Carry) ? 0x80 : 0;
+  Register.set(cpu.status, Carry, Util.read_bit(argument, 0));
 
   let result = argument lsr 1 lor carry_bit land 0xff;
   update(cpu, result);
@@ -233,14 +234,14 @@ let rotate_right = (update, cpu, argument) => {
 };
 
 let shift_left = (update, cpu, argument) => {
-  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 7));
+  Register.set(cpu.status, Carry, Util.read_bit(argument, 7));
   let result = argument lsl 1 land 0xff;
   update(cpu, result);
   set_flags_zn(cpu, result);
 };
 
 let shift_right = (update, cpu, argument) => {
-  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 0));
+  Register.set(cpu.status, Carry, Util.read_bit(argument, 0));
   let result = argument lsr 1;
   update(cpu, result);
   set_flags_zn(cpu, result);
@@ -251,23 +252,23 @@ let store = (location, cpu, argument) => {
 };
 
 let subtract_with_borrow = (cpu, argument) => {
-  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 0 : 1;
+  let carry_bit = Register.get(cpu.status, Carry) ? 0 : 1;
   let result = cpu.acc - argument - carry_bit;
-  Flag.Register.set(
+  Register.set(
     cpu.status,
-    Flag.Overflow,
+    Overflow,
     check_overflow(result, cpu.acc, argument lxor 0b10000000),
   );
-  Flag.Register.set(cpu.status, Flag.Carry, result >= 0);
+  Register.set(cpu.status, Carry, result >= 0);
   cpu.acc = result land 0xff;
 
   set_flags_zn(cpu, cpu.acc);
 };
 
 let test_bits = (cpu, argument) => {
-  Flag.Register.set(cpu.status, Flag.Negative, Util.read_bit(argument, 7));
-  Flag.Register.set(cpu.status, Flag.Overflow, Util.read_bit(argument, 6));
-  Flag.Register.set(cpu.status, Flag.Zero, argument land cpu.acc == 0);
+  Register.set(cpu.status, Negative, Util.read_bit(argument, 7));
+  Register.set(cpu.status, Overflow, Util.read_bit(argument, 6));
+  Register.set(cpu.status, Zero, argument land cpu.acc == 0);
 };
 
 let transfer_acc_to_x = (cpu, _) => {
@@ -353,18 +354,18 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu) => {
     | "adc" => add_with_carry
     | "and" => and_with_acc
     | "asl" => shift_left(rmw_update(opcode, address))
-    | "bcc" => branch_on_flag(Flag.Carry, false)
-    | "bcs" => branch_on_flag(Flag.Carry, true)
-    | "beq" => branch_on_flag(Flag.Zero, true)
+    | "bcc" => branch_on_flag(Carry, false)
+    | "bcs" => branch_on_flag(Carry, true)
+    | "beq" => branch_on_flag(Zero, true)
     | "bit" => test_bits
-    | "bmi" => branch_on_flag(Flag.Negative, true)
-    | "bne" => branch_on_flag(Flag.Zero, false)
-    | "bpl" => branch_on_flag(Flag.Negative, false)
-    | "bvc" => branch_on_flag(Flag.Overflow, false)
-    | "bvs" => branch_on_flag(Flag.Overflow, true)
-    | "clc" => set_flag(Flag.Carry, false)
-    | "cld" => set_flag(Flag.Decimal, false)
-    | "clv" => set_flag(Flag.Overflow, false)
+    | "bmi" => branch_on_flag(Negative, true)
+    | "bne" => branch_on_flag(Zero, false)
+    | "bpl" => branch_on_flag(Negative, false)
+    | "bvc" => branch_on_flag(Overflow, false)
+    | "bvs" => branch_on_flag(Overflow, true)
+    | "clc" => set_flag(Carry, false)
+    | "cld" => set_flag(Decimal, false)
+    | "clv" => set_flag(Overflow, false)
     | "cmp" => compare(acc)
     | "cpx" => compare(x)
     | "cpy" => compare(y)
@@ -392,9 +393,9 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu) => {
     | "rti" => return_from_interrupt
     | "rts" => return_from_subroutine
     | "sbc" => subtract_with_borrow
-    | "sec" => set_flag(Flag.Carry, true)
-    | "sed" => set_flag(Flag.Decimal, true)
-    | "sei" => set_flag(Flag.InterruptDisable, true)
+    | "sec" => set_flag(Carry, true)
+    | "sed" => set_flag(Decimal, true)
+    | "sei" => set_flag(InterruptDisable, true)
     | "sta" => store(acc)
     | "stx" => store(x)
     | "sty" => store(y)
