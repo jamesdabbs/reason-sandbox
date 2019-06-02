@@ -8,6 +8,20 @@ module InstructionTable =
     let compare = compare;
   });
 
+module Lens = {
+  type t('a, 'b) = ('a => 'b, ('b, 'a) => unit);
+
+  let view = ((getter, _): t('a, 'b), a: 'a) => getter(a);
+
+  let set = ((_, setter): t('a, 'b), b: 'b, a: 'a) => setter(b, a);
+
+  let apply = ((getter, setter): t('a, 'b), a: 'a, f): 'b => {
+    let result = f(getter(a));
+    setter(result, a);
+    result;
+  };
+};
+
 exception AddressingModeNotImplemented(AddressingMode.t);
 exception InstructionNotImplemented(string);
 exception OpcodeNotFound(int);
@@ -24,6 +38,10 @@ let build = memory => {
     pc: 0xfffc,
   };
 };
+
+let x = (cpu => cpu.x, (x, cpu) => cpu.x = x);
+let y = (cpu => cpu.y, (y, cpu) => cpu.y = y);
+let acc = (cpu => cpu.acc, (acc, cpu) => cpu.acc = acc);
 
 let check_overflow = (result, acc, arg) => {
   let result_sign = Util.read_bit(result, 7);
@@ -102,19 +120,10 @@ let branch_on_flag = (flag, expected, cpu, argument) =>
     cpu.pc = cpu.pc + 1;
   };
 
-let compare_acc = (cpu, argument) => {
-  set_flags_zn(cpu, cpu.acc - argument);
-  Flag.Register.set(cpu.status, Flag.Carry, cpu.acc >= argument);
-};
-
-let compare_x = (cpu, argument) => {
-  set_flags_zn(cpu, cpu.x - argument);
-  Flag.Register.set(cpu.status, Flag.Carry, cpu.x >= argument);
-};
-
-let compare_y = (cpu, argument) => {
-  set_flags_zn(cpu, cpu.y - argument);
-  Flag.Register.set(cpu.status, Flag.Carry, cpu.y >= argument);
+let compare = (location, cpu, argument) => {
+  let value = Lens.view(location, cpu);
+  set_flags_zn(cpu, value - argument);
+  Flag.Register.set(cpu.status, Flag.Carry, value >= argument);
 };
 
 let decrement = (update, cpu, argument) => {
@@ -123,16 +132,9 @@ let decrement = (update, cpu, argument) => {
   set_flags_zn(cpu, result);
 };
 
-let decrement_x = (cpu, _argument) => {
-  cpu.x = cpu.x == 0 ? 0xff : cpu.x - 1;
-
-  set_flags_zn(cpu, cpu.x);
-};
-
-let decrement_y = (cpu, _argument) => {
-  cpu.y = cpu.y == 0 ? 0xff : cpu.y - 1;
-
-  set_flags_zn(cpu, cpu.y);
+let decrementl = (location, cpu, _) => {
+  Lens.apply(location, cpu, value => value == 0 ? 0xff : value - 1)
+  |> set_flags_zn(cpu);
 };
 
 let increment = (update, cpu, argument) => {
@@ -141,16 +143,9 @@ let increment = (update, cpu, argument) => {
   set_flags_zn(cpu, result);
 };
 
-let increment_x = (cpu, _argument) => {
-  cpu.x = (cpu.x + 1) land 0xff;
-
-  set_flags_zn(cpu, cpu.x);
-};
-
-let increment_y = (cpu, _argument) => {
-  cpu.y = (cpu.y + 1) land 0xff;
-
-  set_flags_zn(cpu, cpu.y);
+let incrementl = (location, cpu, _) => {
+  Lens.apply(location, cpu, value => (value + 1) land 0xff)
+  |> set_flags_zn(cpu);
 };
 
 let jump = (cpu, argument) => {
@@ -166,22 +161,9 @@ let jump_subroutine = (cpu, argument) => {
   cpu.pc = argument;
 };
 
-let load_acc = (cpu, argument) => {
-  cpu.acc = argument;
-
-  set_flags_zn(cpu, cpu.acc);
-};
-
-let load_x = (cpu, argument) => {
-  cpu.x = argument;
-
-  set_flags_zn(cpu, cpu.x);
-};
-
-let load_y = (cpu, argument) => {
-  cpu.y = argument;
-
-  set_flags_zn(cpu, cpu.y);
+let load = (location, cpu, argument) => {
+  Lens.set(location, argument, cpu);
+  set_flags_zn(cpu, argument);
 };
 
 let nop = (_cpu, _argument) => {
@@ -217,8 +199,8 @@ let push_status = (cpu, _argument) => {
   );
 };
 
-let return_from_interrupt =  (cpu, _argument) => {
-  cpu.status =  Flag.Register.from_int(stack_pop(cpu) lor 0x20 land 0xef);
+let return_from_interrupt = (cpu, _argument) => {
+  cpu.status = Flag.Register.from_int(stack_pop(cpu) lor 0x20 land 0xef);
   let low = stack_pop(cpu);
   let high = stack_pop(cpu);
 
@@ -264,16 +246,8 @@ let shift_right = (update, cpu, argument) => {
   set_flags_zn(cpu, result);
 };
 
-let store_acc = (cpu, argument) => {
-  Memory.set_byte(cpu.memory, argument, cpu.acc);
-};
-
-let store_x = (cpu, argument) => {
-  Memory.set_byte(cpu.memory, argument, cpu.x);
-};
-
-let store_y = (cpu, argument) => {
-  Memory.set_byte(cpu.memory, argument, cpu.y);
+let store = (location, cpu, argument) => {
+  Memory.set_byte(cpu.memory, argument, Lens.view(location, cpu));
 };
 
 let subtract_with_borrow = (cpu, argument) => {
@@ -339,8 +313,8 @@ let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
 
 let rmw_update = (opcode: Opcode.t, address) => {
   switch (opcode.addressing_mode) {
-  | AddressingMode.Accumulator => (cpu: t, value) => cpu.acc = value
-  | _ => (cpu: t, value) => Memory.set_byte(cpu.memory, address, value)
+  | AddressingMode.Accumulator => ((cpu: t, value) => cpu.acc = value)
+  | _ => ((cpu: t, value) => Memory.set_byte(cpu.memory, address, value))
   };
 };
 
@@ -349,19 +323,21 @@ let maybe_update_cycle_count = (cpu: t, def: Instruction.t, start, final) => {
   | Instruction.Read =>
     if (start land 0xff00 != final land 0xff00) {
       cpu.cycles = cpu.cycles + 1;
-    }
+    };
     final;
-  | _ => final;
-  }
+  | _ => final
+  };
 };
 
 let handle = (definition: Instruction.t, opcode: Opcode.t, cpu) => {
   open AddressingMode;
   let result = get_address(cpu, opcode.addressing_mode);
-  let address = switch (result) {
-  | MemIndex(value) => value
-  | MemRange(start, final) => maybe_update_cycle_count(cpu, definition, start, final)
-  }
+  let address =
+    switch (result) {
+    | MemIndex(value) => value
+    | MemRange(start, final) =>
+      maybe_update_cycle_count(cpu, definition, start, final)
+    };
 
   let operand =
     switch (definition.access_pattern, opcode.addressing_mode) {
@@ -389,21 +365,21 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu) => {
     | "clc" => set_flag(Flag.Carry, false)
     | "cld" => set_flag(Flag.Decimal, false)
     | "clv" => set_flag(Flag.Overflow, false)
-    | "cmp" => compare_acc
-    | "cpx" => compare_x
-    | "cpy" => compare_y
+    | "cmp" => compare(acc)
+    | "cpx" => compare(x)
+    | "cpy" => compare(y)
     | "dec" => decrement(rmw_update(opcode, address))
-    | "dex" => decrement_x
-    | "dey" => decrement_y
+    | "dex" => decrementl(x)
+    | "dey" => decrementl(y)
     | "eor" => xor_with_acc
     | "inc" => increment(rmw_update(opcode, address))
-    | "inx" => increment_x
-    | "iny" => increment_y
+    | "inx" => incrementl(x)
+    | "iny" => incrementl(y)
     | "jmp" => jump
     | "jsr" => jump_subroutine
-    | "lda" => load_acc
-    | "ldx" => load_x
-    | "ldy" => load_y
+    | "lda" => load(acc)
+    | "ldx" => load(x)
+    | "ldy" => load(y)
     | "lsr" => shift_right(rmw_update(opcode, address))
     | "nop" => nop
     | "ora" => or_with_acc
@@ -419,9 +395,9 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu) => {
     | "sec" => set_flag(Flag.Carry, true)
     | "sed" => set_flag(Flag.Decimal, true)
     | "sei" => set_flag(Flag.InterruptDisable, true)
-    | "sta" => store_acc
-    | "stx" => store_x
-    | "sty" => store_y
+    | "sta" => store(acc)
+    | "stx" => store(x)
+    | "sty" => store(y)
     | "tax" => transfer_acc_to_x
     | "tay" => transfer_acc_to_y
     | "tsx" => transfer_stack_to_x
