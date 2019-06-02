@@ -1,5 +1,5 @@
 {
-  "name": "sandbox",
+  "name": "rawbones",
   "version": "0.1.0",
   "sources": [
     {
@@ -26,8 +26,5 @@
     "error": "+101"
   },
   "namespace": true,
-  "refmt": 3,
-  "bsc-flags": [
-    "-bs-g"
-  ]
+  "refmt": 3
 }
