@@ -146,7 +146,7 @@ let jump = (cpu, argument) => {
 };
 
 let jump_subroutine = (cpu, argument) => {
-  let target = cpu.pc + 2;
+  let target = cpu.pc + 1;
 
   stack_push(cpu, target lsr 8);
   stack_push(cpu, target land 0xff);
@@ -209,7 +209,7 @@ let return_from_subroutine = (cpu, _argument) => {
   let low = stack_pop(cpu);
   let high = stack_pop(cpu);
 
-  cpu.pc = high lsl 8 + low;
+  cpu.pc = high lsl 8 + low + 1;
 };
 
 let store_acc = (cpu, argument) => {
