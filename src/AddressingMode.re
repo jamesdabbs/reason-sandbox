@@ -13,26 +13,7 @@ type t =
   | ZeroPageY
   | Implicit;
 
-exception NotImplemented(t);
 exception Unrecognized(string);
-
-let inspect = (mode: t) => {
-  switch (mode) {
-  | Absolute => "absolute"
-  | AbsoluteX => "absoluteX"
-  | AbsoluteY => "absoluteY"
-  | Accumulator => "accumulator"
-  | Immediate => "immediate"
-  | Indirect => "indirect"
-  | IndirectX => "indirectX"
-  | IndirectY => "indirectY"
-  | Relative => "relative"
-  | ZeroPage => "zeroPage"
-  | ZeroPageX => "zeroPageX"
-  | ZeroPageY => "zeroPageY"
-  | Implicit => "implicit"
-  };
-};
 
 let decode = (json: Js.Json.t): t => {
   switch (Js.Json.decodeString(json)) {
@@ -40,7 +21,7 @@ let decode = (json: Js.Json.t): t => {
   | Some(value) =>
     switch (value) {
     | "absolute" => Absolute
-    | "absoluteX" => AbsoluteY
+    | "absoluteX" => AbsoluteX
     | "absoluteY" => AbsoluteY
     | "accumulator" => Accumulator
     | "immediate" => Immediate
@@ -56,19 +37,46 @@ let decode = (json: Js.Json.t): t => {
   };
 };
 
-let get_address = (cpu: Types.cpu, mode: t) => {
+type result =
+  | MemIndex(int)
+  | MemRange(int, int);
+
+let get_address = (cpu: Types.cpu, mode: t): result => {
+  open Memory;
+
   switch (mode) {
-  | Implicit => 0
-  | Immediate => cpu.pc
-  | Absolute => Memory.get_word(cpu.memory, cpu.pc)
-  | ZeroPage => Memory.get_byte(cpu.memory, cpu.pc)
+  | Implicit => MemIndex(0)
+  | Accumulator => MemIndex(cpu.acc)
+  | Immediate => MemIndex(cpu.pc)
+  | ZeroPage => MemIndex(get_byte(cpu.memory, cpu.pc))
+  | ZeroPageX => MemIndex((get_byte(cpu.memory, cpu.pc) + cpu.x) land 0xff)
+  | ZeroPageY => MemIndex((get_byte(cpu.memory, cpu.pc) + cpu.y) land 0xff)
+  | Absolute => MemIndex(get_word(cpu.memory, cpu.pc))
+  | AbsoluteX =>
+  let start = get_word(cpu.memory, cpu.pc);
+  let final = (start + cpu.x) land 0xffff;
+  MemRange(start, final);
+  | AbsoluteY => 
+  let start = get_word(cpu.memory, cpu.pc);
+  let final = (start + cpu.y) land 0xffff;
+  MemRange(start, final);
+  | Indirect =>
+    let start = get_word(cpu.memory, cpu.pc);
+    MemIndex(get_indirect(cpu.memory, start));
+  | IndirectX =>
+    let start = get_byte(cpu.memory, cpu.pc) + cpu.x;
+    let index = get_indirect(cpu.memory, start land 0xff);
+    MemIndex(index);
+  | IndirectY =>
+    let start = get_indirect(cpu.memory, get_byte(cpu.memory, cpu.pc));
+    let final = (start + cpu.y) land 0xffff;
+    MemRange(start, final);
   | Relative =>
-    let offset = Memory.get_byte(cpu.memory, cpu.pc);
+    let offset = get_byte(cpu.memory, cpu.pc);
     if (Util.read_bit(offset, 7)) {
-      cpu.pc - offset lxor 0xff;
+      MemIndex(cpu.pc - offset lxor 0xff);
     } else {
-      cpu.pc + offset + 1;
+      MemIndex(cpu.pc + offset + 1);
     };
-  | _ => raise(NotImplemented(mode))
   };
 };

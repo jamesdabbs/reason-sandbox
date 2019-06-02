@@ -25,12 +25,12 @@ let build = memory => {
   };
 };
 
-let check_overflow = (result, acc, arg)  => {
+let check_overflow = (result, acc, arg) => {
   let result_sign = Util.read_bit(result, 7);
   let acc_sign = Util.read_bit(acc, 7);
   let arg_sign = Util.read_bit(arg, 7);
-  !(result_sign == acc_sign || result_sign == arg_sign)
-}
+  !(result_sign == acc_sign || result_sign == arg_sign);
+};
 
 let copy = cpu => {
   ...cpu,
@@ -75,14 +75,18 @@ let stack_push = (cpu: t, value: int) => {
 };
 
 let add_with_carry = (cpu, argument) => {
-  let carry_bit = Flag.Register.to_int(cpu.status) land 1;
+  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 1 : 0;
   let result = cpu.acc + argument + carry_bit;
-  Flag.Register.set(cpu.status, Flag.Overflow, check_overflow(result, cpu.acc, argument));
+  Flag.Register.set(
+    cpu.status,
+    Flag.Overflow,
+    check_overflow(result, cpu.acc, argument),
+  );
   Flag.Register.set(cpu.status, Flag.Carry, result > 0xff);
   cpu.acc = result land 0xff;
 
   set_flags_zn(cpu, cpu.acc);
-}
+};
 
 let and_with_acc = (cpu, argument) => {
   cpu.acc = cpu.acc land argument;
@@ -98,9 +102,55 @@ let branch_on_flag = (flag, expected, cpu, argument) =>
     cpu.pc = cpu.pc + 1;
   };
 
-let compare = (cpu, argument) => {
+let compare_acc = (cpu, argument) => {
   set_flags_zn(cpu, cpu.acc - argument);
   Flag.Register.set(cpu.status, Flag.Carry, cpu.acc >= argument);
+};
+
+let compare_x = (cpu, argument) => {
+  set_flags_zn(cpu, cpu.x - argument);
+  Flag.Register.set(cpu.status, Flag.Carry, cpu.x >= argument);
+};
+
+let compare_y = (cpu, argument) => {
+  set_flags_zn(cpu, cpu.y - argument);
+  Flag.Register.set(cpu.status, Flag.Carry, cpu.y >= argument);
+};
+
+let decrement = (update, cpu, argument) => {
+  let result = argument == 0 ? 0xff : argument - 1;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
+};
+
+let decrement_x = (cpu, _argument) => {
+  cpu.x = cpu.x == 0 ? 0xff : cpu.x - 1;
+
+  set_flags_zn(cpu, cpu.x);
+};
+
+let decrement_y = (cpu, _argument) => {
+  cpu.y = cpu.y == 0 ? 0xff : cpu.y - 1;
+
+  set_flags_zn(cpu, cpu.y);
+};
+
+let increment = (update, cpu, argument) => {
+  let result = (argument + 1) land 0xff;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
+};
+
+let increment_x = (cpu, _argument) => {
+  cpu.x = (cpu.x + 1) land 0xff;
+
+  set_flags_zn(cpu, cpu.x);
+};
+
+let increment_y = (cpu, _argument) => {
+  cpu.y = (cpu.y + 1) land 0xff;
+
+  set_flags_zn(cpu, cpu.y);
 };
 
 let jump = (cpu, argument) => {
@@ -108,7 +158,7 @@ let jump = (cpu, argument) => {
 };
 
 let jump_subroutine = (cpu, argument) => {
-  let target = cpu.pc + 2;
+  let target = cpu.pc + 1;
 
   stack_push(cpu, target lsr 8);
   stack_push(cpu, target land 0xff);
@@ -128,6 +178,12 @@ let load_x = (cpu, argument) => {
   set_flags_zn(cpu, cpu.x);
 };
 
+let load_y = (cpu, argument) => {
+  cpu.y = argument;
+
+  set_flags_zn(cpu, cpu.y);
+};
+
 let nop = (_cpu, _argument) => {
   ();
 };
@@ -135,7 +191,7 @@ let nop = (_cpu, _argument) => {
 let or_with_acc = (cpu, argument) => {
   cpu.acc = cpu.acc lor argument;
   set_flags_zn(cpu, cpu.acc);
-}
+};
 
 let pop_acc = (cpu, _argument) => {
   cpu.acc = stack_pop(cpu);
@@ -145,23 +201,67 @@ let pop_acc = (cpu, _argument) => {
 
 let pop_status = (cpu, _argument) => {
   // See https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
-  cpu.status = Flag.Register.from_int(stack_pop(cpu) lor 0x20 land 0xef);
-}
+  cpu.status =
+    Flag.Register.from_int(stack_pop(cpu) lor 0x20 land 0xef);
+};
 
 let push_acc = (cpu, _argument) => {
   stack_push(cpu, cpu.acc);
-}
+};
 
 let push_status = (cpu, _argument) => {
   // See https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
-  stack_push(cpu, Flag.Register.to_int(cpu.status) lor 0x10);
+  stack_push(
+    cpu,
+    Flag.Register.to_int(cpu.status) lor 0x10,
+  );
+};
+
+let return_from_interrupt =  (cpu, _argument) => {
+  cpu.status =  Flag.Register.from_int(stack_pop(cpu) lor 0x20 land 0xef);
+  let low = stack_pop(cpu);
+  let high = stack_pop(cpu);
+
+  cpu.pc = high lsl 8 + low;
 };
 
 let return_from_subroutine = (cpu, _argument) => {
   let low = stack_pop(cpu);
   let high = stack_pop(cpu);
 
-  cpu.pc = high lsl 8 + low;
+  cpu.pc = high lsl 8 + low + 1;
+};
+
+let rotate_left = (update, cpu, argument) => {
+  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 1 : 0;
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 7));
+
+  let result = argument lsl 1 lor carry_bit land 0xff;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
+};
+
+let rotate_right = (update, cpu, argument) => {
+  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 0x80 : 0;
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 0));
+
+  let result = argument lsr 1 lor carry_bit land 0xff;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
+};
+
+let shift_left = (update, cpu, argument) => {
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 7));
+  let result = argument lsl 1 land 0xff;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
+};
+
+let shift_right = (update, cpu, argument) => {
+  Flag.Register.set(cpu.status, Flag.Carry, Util.read_bit(argument, 0));
+  let result = argument lsr 1;
+  update(cpu, result);
+  set_flags_zn(cpu, result);
 };
 
 let store_acc = (cpu, argument) => {
@@ -172,16 +272,63 @@ let store_x = (cpu, argument) => {
   Memory.set_byte(cpu.memory, argument, cpu.x);
 };
 
+let store_y = (cpu, argument) => {
+  Memory.set_byte(cpu.memory, argument, cpu.y);
+};
+
+let subtract_with_borrow = (cpu, argument) => {
+  let carry_bit = Flag.Register.get(cpu.status, Flag.Carry) ? 0 : 1;
+  let result = cpu.acc - argument - carry_bit;
+  Flag.Register.set(
+    cpu.status,
+    Flag.Overflow,
+    check_overflow(result, cpu.acc, argument lxor 0b10000000),
+  );
+  Flag.Register.set(cpu.status, Flag.Carry, result >= 0);
+  cpu.acc = result land 0xff;
+
+  set_flags_zn(cpu, cpu.acc);
+};
+
 let test_bits = (cpu, argument) => {
   Flag.Register.set(cpu.status, Flag.Negative, Util.read_bit(argument, 7));
   Flag.Register.set(cpu.status, Flag.Overflow, Util.read_bit(argument, 6));
   Flag.Register.set(cpu.status, Flag.Zero, argument land cpu.acc == 0);
 };
 
+let transfer_acc_to_x = (cpu, _) => {
+  cpu.x = cpu.acc;
+  set_flags_zn(cpu, cpu.x);
+};
+
+let transfer_acc_to_y = (cpu, _) => {
+  cpu.y = cpu.acc;
+  set_flags_zn(cpu, cpu.y);
+};
+
+let transfer_stack_to_x = (cpu, _) => {
+  cpu.x = cpu.stack;
+  set_flags_zn(cpu, cpu.x);
+};
+
+let transfer_x_to_acc = (cpu, _) => {
+  cpu.acc = cpu.x;
+  set_flags_zn(cpu, cpu.acc);
+};
+
+let transfer_x_to_stack = (cpu, _) => {
+  cpu.stack = cpu.x;
+};
+
+let transfer_y_to_acc = (cpu, _) => {
+  cpu.acc = cpu.y;
+  set_flags_zn(cpu, cpu.acc);
+};
+
 let xor_with_acc = (cpu, argument) => {
   cpu.acc = cpu.acc lxor argument;
   set_flags_zn(cpu, cpu.acc);
-}
+};
 
 let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
   switch (definition.access_pattern) {
@@ -190,20 +337,46 @@ let step_size = (definition: Instruction.t, opcode: Opcode.t) => {
   };
 };
 
-let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
-  let address = AddressingMode.get_address(cpu, opcode.addressing_mode);
+let rmw_update = (opcode: Opcode.t, address) => {
+  switch (opcode.addressing_mode) {
+  | AddressingMode.Accumulator => (cpu: t, value) => cpu.acc = value
+  | _ => (cpu: t, value) => Memory.set_byte(cpu.memory, address, value)
+  };
+};
+
+let maybe_update_cycle_count = (cpu: t, def: Instruction.t, start, final) => {
+  switch (def.access_pattern) {
+  | Instruction.Read =>
+    if (start land 0xff00 != final land 0xff00) {
+      cpu.cycles = cpu.cycles + 1;
+    }
+    final;
+  | _ => final;
+  }
+};
+
+let handle = (definition: Instruction.t, opcode: Opcode.t, cpu) => {
+  open AddressingMode;
+  let result = get_address(cpu, opcode.addressing_mode);
+  let address = switch (result) {
+  | MemIndex(value) => value
+  | MemRange(start, final) => maybe_update_cycle_count(cpu, definition, start, final)
+  }
 
   let operand =
-    switch (definition.access_pattern) {
-    | Instruction.Read => Memory.get_byte(cpu.memory, address)
-    | Instruction.Static => 0
-    | _ => address
+    switch (definition.access_pattern, opcode.addressing_mode) {
+    | (Instruction.Static, _) => 0
+    | (Instruction.Write, _) => address
+    | (Instruction.Jump, _) => address
+    | (Instruction.ReadModifyWrite, Accumulator) => address
+    | _ => Memory.get_byte(cpu.memory, address)
     };
 
   let operation =
     switch (definition.label) {
     | "adc" => add_with_carry
     | "and" => and_with_acc
+    | "asl" => shift_left(rmw_update(opcode, address))
     | "bcc" => branch_on_flag(Flag.Carry, false)
     | "bcs" => branch_on_flag(Flag.Carry, true)
     | "beq" => branch_on_flag(Flag.Zero, true)
@@ -216,24 +389,45 @@ let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
     | "clc" => set_flag(Flag.Carry, false)
     | "cld" => set_flag(Flag.Decimal, false)
     | "clv" => set_flag(Flag.Overflow, false)
-    | "cmp" => compare
+    | "cmp" => compare_acc
+    | "cpx" => compare_x
+    | "cpy" => compare_y
+    | "dec" => decrement(rmw_update(opcode, address))
+    | "dex" => decrement_x
+    | "dey" => decrement_y
     | "eor" => xor_with_acc
+    | "inc" => increment(rmw_update(opcode, address))
+    | "inx" => increment_x
+    | "iny" => increment_y
     | "jmp" => jump
     | "jsr" => jump_subroutine
     | "lda" => load_acc
     | "ldx" => load_x
+    | "ldy" => load_y
+    | "lsr" => shift_right(rmw_update(opcode, address))
     | "nop" => nop
     | "ora" => or_with_acc
     | "pha" => push_acc
     | "php" => push_status
     | "pla" => pop_acc
     | "plp" => pop_status
+    | "ror" => rotate_right(rmw_update(opcode, address))
+    | "rol" => rotate_left(rmw_update(opcode, address))
+    | "rti" => return_from_interrupt
     | "rts" => return_from_subroutine
+    | "sbc" => subtract_with_borrow
     | "sec" => set_flag(Flag.Carry, true)
     | "sed" => set_flag(Flag.Decimal, true)
     | "sei" => set_flag(Flag.InterruptDisable, true)
     | "sta" => store_acc
     | "stx" => store_x
+    | "sty" => store_y
+    | "tax" => transfer_acc_to_x
+    | "tay" => transfer_acc_to_y
+    | "tsx" => transfer_stack_to_x
+    | "txa" => transfer_x_to_acc
+    | "txs" => transfer_x_to_stack
+    | "tya" => transfer_y_to_acc
     | _ => raise(InstructionNotImplemented(definition.label))
     };
 
@@ -265,19 +459,12 @@ type error =
   | InstructionNotImplemented(string)
   | OpcodeNotFound(int);
 
-let step = (cpu: t): option(error) => {
+let step = (cpu: t) => {
   let opcode = Memory.get_byte(cpu.memory, cpu.pc);
   cpu.pc = cpu.pc + 1;
 
   switch (InstructionTable.find(opcode, table)) {
-  | command =>
-    switch (command(cpu)) {
-    | exception (AddressingMode.NotImplemented(mode)) =>
-      Some(AddressingModeNotImplemented(mode))
-    | exception (InstructionNotImplemented(ins)) =>
-      Some(InstructionNotImplemented(ins))
-    | _ => None
-    }
-  | exception Not_found => Some(OpcodeNotFound(opcode))
+  | command => command(cpu)
+  | exception Not_found => raise(OpcodeNotFound(opcode))
   };
 };

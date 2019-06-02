@@ -2,6 +2,8 @@ open Jest;
 open Expect;
 open Spec;
 
+exception LinesDoNotMatch(string, string);
+
 describe("CPU", () => {
   let rom = Rom.parse(rom_path("nestest"));
   let memory = Memory.build(rom);
@@ -84,36 +86,42 @@ describe("CPU", () => {
     };
 
     test("runs legal opcodes successfully", () => {
+      let target = "C6BD";
+      let tracing = false;
+
       let path = Util.expand_path("__tests__/roms/nestest.log");
-      let log = Node.Fs.readFileSync(path, `utf8);
-      let lines = Js.String.split("\n", log);
-      let target = "CA05";
-      let log_at = line => Js.String2.startsWith(line, target);
-      let target_log = Js.Array.find(log_at, lines) |> Util.default("");
+      let lines = Node.Fs.readFileSync(path, `utf8) |> Js.String.split("\n");
 
-      let count = ref(0);
-      let cpu_at = target => cpu.pc == int_of_string("0x" ++ target);
-      let logs_match = (cpu, line) => Cpu.debug_log(cpu) == lines[line];
+      let rec run = index => {
+        let line = lines[index];
 
-      while (!cpu_at(target) && logs_match(cpu, count^)) {
-        trace(lines[count^]);
-        switch (Cpu.step(cpu)) {
-        | Some(Cpu.AddressingModeNotImplemented(mode)) =>
+        let previous_pc = cpu.pc;
+        let before = Cpu.debug_log(cpu);
+        Cpu.step(cpu);
+        let after = Cpu.debug_log(cpu);
+
+        if (after != line) {
+          let dis = disasm(previous_pc, 1);
           Js.log(
-            "Addressing mode not implemented: "
-            ++ AddressingMode.inspect(mode),
-          )
-        | Some(Cpu.InstructionNotImplemented(instruction)) =>
-          Js.log("Instruction not implemented: " ++ instruction)
-        | Some(Cpu.OpcodeNotFound(code)) =>
-          Js.log("Opcode not found: " ++ string_of_int(code))
-        | _ => ()
+            {j|
+            Previous:    $before
+            Expected:    $line
+            Actual:      $after
+            Disassembly: $dis
+          |j},
+          );
+          raise(LinesDoNotMatch(after, line));
+        } else if (cpu.pc != int_of_string("0x" ++ target)) {
+          if (tracing) {
+            trace(after);
+          };
+          run(index + 1);
         };
-        count := count^ + 1;
       };
 
-      trace(lines[count^]);
-      expect(Cpu.debug_log(cpu)) |> toEqual(target_log);
+      expect(() =>
+        run(1)
+      ) |> not_ |> toThrow;
     });
   });
 });

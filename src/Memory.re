@@ -31,3 +31,12 @@ let get_word = (mem: t, loc: int) => {
   let high = get_byte(mem, loc + 1);
   high lsl 8 + low;
 };
+
+let get_indirect = (mem: t, loc: int) => {
+  // If an indirect fetch would wrap to the next page,
+  // it instead wraps to the beginning of the current page.
+  let wrapped = loc land 0xff00 + (loc + 1) land 0xff;
+  let low = get_byte(mem, loc);
+  let high = get_byte(mem, wrapped);
+  high lsl 8 + low;
+}
