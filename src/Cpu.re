@@ -344,9 +344,24 @@ let rmw_update = (opcode: Opcode.t, address) => {
   };
 };
 
-let handle = (definition: Instruction.t, opcode: Opcode.t, cpu: t) => {
+let maybe_update_cycle_count = (cpu: t, def: Instruction.t, start, final) => {
+  switch (def.access_pattern) {
+  | Instruction.Read =>
+    if (start land 0xff00 != final land 0xff00) {
+      cpu.cycles = cpu.cycles + 1;
+    }
+    final;
+  | _ => final;
+  }
+};
+
+let handle = (definition: Instruction.t, opcode: Opcode.t, cpu) => {
   open AddressingMode;
-  let address = get_address(cpu, opcode.addressing_mode);
+  let result = get_address(cpu, opcode.addressing_mode);
+  let address = switch (result) {
+  | MemIndex(value) => value
+  | MemRange(start, final) => maybe_update_cycle_count(cpu, definition, start, final)
+  }
 
   let operand =
     switch (definition.access_pattern, opcode.addressing_mode) {

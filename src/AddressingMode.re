@@ -37,46 +37,46 @@ let decode = (json: Js.Json.t): t => {
   };
 };
 
-let maybe_update_cycle_count = (cpu: Types.cpu, start, final) => {
-  if (start land 0xff00 != final land 0xff00) {
-    cpu.cycles = cpu.cycles + 1;
-  }
-  final;
-};
+type result =
+  | MemIndex(int)
+  | MemRange(int, int);
 
-let get_address = (cpu: Types.cpu, mode: t) => {
+let get_address = (cpu: Types.cpu, mode: t): result => {
   open Memory;
 
   switch (mode) {
-  | Implicit => 0
-  | Accumulator => cpu.acc
-  | Immediate => cpu.pc
-  | ZeroPage => get_byte(cpu.memory, cpu.pc)
-  | ZeroPageX => (get_byte(cpu.memory, cpu.pc) + cpu.x) land 0xff
-  | ZeroPageY => (get_byte(cpu.memory, cpu.pc) + cpu.y) land 0xff
-  | Absolute => get_word(cpu.memory, cpu.pc)
+  | Implicit => MemIndex(0)
+  | Accumulator => MemIndex(cpu.acc)
+  | Immediate => MemIndex(cpu.pc)
+  | ZeroPage => MemIndex(get_byte(cpu.memory, cpu.pc))
+  | ZeroPageX => MemIndex((get_byte(cpu.memory, cpu.pc) + cpu.x) land 0xff)
+  | ZeroPageY => MemIndex((get_byte(cpu.memory, cpu.pc) + cpu.y) land 0xff)
+  | Absolute => MemIndex(get_word(cpu.memory, cpu.pc))
   | AbsoluteX =>
   let start = get_word(cpu.memory, cpu.pc);
   let final = (start + cpu.x) land 0xffff;
-  maybe_update_cycle_count(cpu, start, final);
+  MemRange(start, final);
   | AbsoluteY => 
   let start = get_word(cpu.memory, cpu.pc);
   let final = (start + cpu.y) land 0xffff;
-  maybe_update_cycle_count(cpu, start, final);
-  | Indirect => get_indirect(cpu.memory, get_word(cpu.memory, cpu.pc));
+  MemRange(start, final);
+  | Indirect =>
+    let start = get_word(cpu.memory, cpu.pc);
+    MemIndex(get_indirect(cpu.memory, start));
   | IndirectX =>
     let start = get_byte(cpu.memory, cpu.pc) + cpu.x;
-    get_indirect(cpu.memory, start land 0xff);
+    let index = get_indirect(cpu.memory, start land 0xff);
+    MemIndex(index);
   | IndirectY =>
     let start = get_indirect(cpu.memory, get_byte(cpu.memory, cpu.pc));
     let final = (start + cpu.y) land 0xffff;
-    maybe_update_cycle_count(cpu, start, final);
+    MemRange(start, final);
   | Relative =>
     let offset = get_byte(cpu.memory, cpu.pc);
     if (Util.read_bit(offset, 7)) {
-      cpu.pc - offset lxor 0xff;
+      MemIndex(cpu.pc - offset lxor 0xff);
     } else {
-      cpu.pc + offset + 1;
+      MemIndex(cpu.pc + offset + 1);
     };
   };
 };

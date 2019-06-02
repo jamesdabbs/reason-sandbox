@@ -86,8 +86,8 @@ describe("CPU", () => {
     };
 
     test("runs legal opcodes successfully", () => {
-      let target = "E1E4";
-      let tracing = true;
+      let target = "C6BD";
+      let tracing = false;
 
       let path = Util.expand_path("__tests__/roms/nestest.log");
       let lines = Node.Fs.readFileSync(path, `utf8) |> Js.String.split("\n");
