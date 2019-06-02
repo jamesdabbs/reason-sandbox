@@ -61,8 +61,11 @@ let get_address = (cpu: Types.cpu, mode: t) => {
   | Implicit => 0
   | Accumulator => cpu.acc
   | Immediate => cpu.pc
-  | Absolute => Memory.get_word(cpu.memory, cpu.pc)
   | ZeroPage => Memory.get_byte(cpu.memory, cpu.pc)
+  | Absolute => Memory.get_word(cpu.memory, cpu.pc)
+  | IndirectX =>
+    let start = Memory.get_byte(cpu.memory, cpu.pc) + cpu.x;
+    Memory.get_indirect(cpu.memory, start land 0xff);
   | Relative =>
     let offset = Memory.get_byte(cpu.memory, cpu.pc);
     if (Util.read_bit(offset, 7)) {
