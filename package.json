@@ -1,6 +1,6 @@
 {
-  "name": "sandbox",
-  "version": "0.1.0",
+  "name": "rawbones",
+  "version": "0.1.3",
   "scripts": {
     "build": "bsb -make-world",
     "start": "bsb -make-world -w",
@@ -8,7 +8,8 @@
     "test": "yarn run jest"
   },
   "keywords": [
-    "BuckleScript"
+    "BuckleScript",
+    "Reason"
   ],
   "author": "",
   "license": "MIT",
@@ -19,5 +20,10 @@
   },
   "dependencies": {
     "@glennsl/bs-json": "^3.0.0"
-  }
+  },
+  "files": [
+    "src/*.re",
+    "src/instructions.json",
+    "bsconfig.json"
+  ]
 }

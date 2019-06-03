@@ -10,7 +10,7 @@ describe("Instruction", () => {
   open Instruction;
 
   let instructions: Map.t(Instruction.t) =
-    load(Util.expand_path("src/instructions.json"))
+    Instruction.all
     |> Array.map(instruction => (instruction.label, instruction))
     |> Map.fromArray;
 

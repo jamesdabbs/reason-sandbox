@@ -5,8 +5,7 @@ open! Expect.Operators;
 describe("Disassemble", () => {
   let rom = Spec.rom("nestest");
   let memory = Memory.build(rom);
-  let instructions =
-    Instruction.load(Util.expand_path("src/instructions.json"));
+  let instructions = Instruction.all;
 
   let disassemble = Disassemble.make(instructions, memory);
 

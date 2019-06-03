@@ -5,7 +5,7 @@ open Spec;
 exception LinesDoNotMatch(string, string);
 
 describe("CPU", () => {
-  let rom = Rom.parse(rom_path("nestest"));
+  let rom = rom("nestest");
   let memory = Memory.build(rom);
   let initial = Cpu.build(memory);
 
@@ -68,7 +68,7 @@ describe("CPU", () => {
   });
 
   describe("nestest", () => {
-    let instrs = Instruction.load(Util.expand_path("src/instructions.json"));
+    let instrs = Instruction.all;
     let disasm = Disassemble.make(instrs, memory);
     let cpu = Cpu.copy(initial);
     cpu.pc = 0xc000;
