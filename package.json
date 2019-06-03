@@ -23,6 +23,7 @@
   },
   "files": [
     "src/*.re",
+    "src/instructions.json",
     "bsconfig.json"
   ]
 }
