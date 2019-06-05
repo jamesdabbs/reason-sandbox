@@ -65,6 +65,10 @@ let reset = cpu => {
   cpu.pc = Memory.get_word(cpu.memory, cpu.pc);
 };
 
+let now = cpu => {
+  Disassemble.make(cpu.memory)(cpu.pc, 1);
+};
+
 let debug_log = cpu => {
   Printf.sprintf(
     "%04X A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%i",

@@ -67,6 +67,16 @@ describe("CPU", () => {
     );
   });
 
+  describe("now", () => {
+    let cpu = Cpu.copy(initial);
+    cpu.pc = 0xc000;
+    let actual = cpu |> Cpu.now |> String.trim;
+
+    test("it disassembles the current instruction", () => {
+      expect(actual) |> toEqual("C000 4C F5 C5 ;; JMP $C5F5");
+    });
+  });
+
   describe("nestest", () => {
     let disasm = Disassemble.make(memory);
     let cpu = Cpu.copy(initial);
