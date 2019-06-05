@@ -68,8 +68,7 @@ describe("CPU", () => {
   });
 
   describe("nestest", () => {
-    let instrs = Instruction.all;
-    let disasm = Disassemble.make(instrs, memory);
+    let disasm = Disassemble.make(memory);
     let cpu = Cpu.copy(initial);
     cpu.pc = 0xc000;
 
