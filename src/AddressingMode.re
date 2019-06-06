@@ -37,6 +37,25 @@ let decode = (json: Js.Json.t): t => {
   };
 };
 
+let format_args =  (mode: t, args: array(int)) => {
+  let hex_args = Array.map((num) => Printf.sprintf("%02X", num), args);
+  switch (mode) {
+  | Absolute => "$" ++ hex_args[1] ++ hex_args[0]
+  | AbsoluteX => "$" ++ hex_args[1] ++ hex_args[0] ++ ",X"
+  | AbsoluteY => "$" ++ hex_args[1] ++ hex_args[0] ++ ",Y"
+  | Accumulator => "A"
+  | Immediate => "#$" ++ hex_args[0]
+  | Implicit => ""
+  | Indirect => "($" ++ hex_args[1] ++ hex_args[0] ++ ")"
+  | IndirectX => "($" ++ hex_args[0] ++ ",X)"
+  | IndirectY => "($" ++ hex_args[0] ++ "),Y"
+  | Relative => "&" ++ hex_args[0]
+  | ZeroPage => "$" ++ hex_args[0]
+  | ZeroPageX => "$" ++ hex_args[0] ++ ",X"
+  | ZeroPageY => "$" ++ hex_args[0] ++ ",Y"
+  };
+};
+
 type result =
   | MemIndex(int)
   | MemRange(int, int);

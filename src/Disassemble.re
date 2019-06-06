@@ -28,13 +28,14 @@ let format =
     Array.fold_left((acc, arg) => acc ++ " " ++ to_hex(arg), "", args)
     |> String.trim
     |> Util.ljust(5);
+  let fargs = AddressingMode.format_args(opcode.addressing_mode, args);
   let label = String.uppercase(instruction.label);
-
-  {j|$hstart $hcode $hargs ;; $label\n|j};
+  let base = {j|$hstart $hcode $hargs ;; $label|j};
+  fargs == "" ? base ++ "\n" : base ++ " " ++ fargs ++ "\n";
 };
 
-let make = (instructions: array(Instruction.t), memory: Memory.t) => {
-  let opcodes = Array.fold_left(add_opcodes, Opcodes.empty, instructions);
+let make = (memory: Memory.t) => {
+  let opcodes = Array.fold_left(add_opcodes, Opcodes.empty, Instruction.all);
 
   let rec run = (start: int, length: int) =>
     if (length == 0) {
