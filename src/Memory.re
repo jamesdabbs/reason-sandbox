@@ -1,9 +1,9 @@
 type t = {
   ram: bytes,
-  rom: Rom.rom,
+  rom: Rom.t,
 };
 
-let build = (rom: Rom.rom): t => {
+let build = (rom: Rom.t): t => {
   {ram: Bytes.make(0x800, Char.chr(0)), rom};
 };
 

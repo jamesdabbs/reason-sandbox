@@ -1,5 +1,8 @@
 open Jest;
 open Expect;
+open Spec;
+
+let nestest = rom("nestest");
 
 let ctrl_test_helper = (regs: Ppu.registers, n, reader, unset, set) => {
   test("checking CTRL " ++ string_of_int(n) ++ " bit set", () => {
@@ -24,7 +27,8 @@ let mask_test_helper = (regs: Ppu.registers, n, reader) => {
 };
 
 describe("PPU", () => {
-  let regs = Ppu.build();
+  let ppu = Ppu.build(nestest);
+  let regs = ppu.registers;
 
   describe("PPUCTRL", () => {
     ctrl_test_helper(regs, 0, Ppu.x_scroll_offset, 0, 256);
@@ -40,5 +44,47 @@ describe("PPU", () => {
     mask_test_helper(regs, 2, Ppu.show_sprites_left);
     mask_test_helper(regs, 3, Ppu.show_background);
     mask_test_helper(regs, 4, Ppu.show_sprites);
+  });
+
+  describe("fetch", () => {
+    let bad_addresses = [0x2000, 0x2001, 0x2003, 0x2005, 0x2006];
+
+    testAll("fetching from write only registers", bad_addresses, (address) => {
+      expect(Ppu.fetch(ppu, address)) |> toEqual(0);
+    });
+
+    test("fetching status", () => {
+      regs.status = 131;
+      let return_value = Ppu.fetch(ppu, 0x2002);
+      // After reading PPUSTATUS, the top bit of status (vblank) is cleared.
+      expect((return_value, regs.status)) |> toEqual((131, 3));
+    });
+
+    test("fetching from PPUDATA returns a buffered value", () => {
+      regs.ppu_address = 0x2020;
+      regs.ppu_data = 0;
+      Array.set(ppu.name_table, 0x20, 42);
+      let return_value = Ppu.fetch(ppu, 0x2007);
+      expect((return_value, regs.ppu_data)) |> toEqual((0, 42));
+    });
+
+    test("fetching palette info through PPUDATA is unbuffered", () => {
+      regs.ppu_address = 0x3f01;
+      Array.set(ppu.palette_table, 1, 33);
+      regs.ppu_data = 0;
+      let return_value = Ppu.fetch(ppu, 0x2007);
+      expect((return_value, regs.ppu_data)) |> toEqual((33, 33));
+    });
+
+    test("fetching from PPUDATA increments the ppu_address by the vram_step", () => {
+      regs.ppu_address = 0x2010;
+      let _ = Ppu.fetch(ppu, 0x2007);
+      let small_step = regs.ppu_address;
+      regs.control = 132;
+      let _ = Ppu.fetch(ppu, 0x2007);
+      let big_step = regs.ppu_address;
+      expect((small_step, big_step)) |> toEqual((0x2011, 0x2031));
+    });
+
   });
 });
