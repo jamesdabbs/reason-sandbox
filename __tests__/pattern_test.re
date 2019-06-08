@@ -1,7 +1,9 @@
 open Jest;
 open Expect;
 
-describe("Pattern", () =>
+describe("Pattern", () => {
+  let format = n => n == 0 ? "." : string_of_int(n);
+
   test("it can be built directly", () => {
     let tile =
       Pattern.Tile.from_codes([|
@@ -23,7 +25,7 @@ describe("Pattern", () =>
         0x87,
       |]);
 
-    expect(String.trim(Pattern.Tile.inspect(tile)))
+    expect(String.trim(Pattern.Tile.inspect(tile, format)))
     |> toEqual(
          String.trim(
            "
@@ -38,5 +40,5 @@ describe("Pattern", () =>
 ",
          ),
        );
-  })
-);
+  });
+});

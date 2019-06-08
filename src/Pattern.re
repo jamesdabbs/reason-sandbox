@@ -19,9 +19,8 @@ module Tile = {
   let from_codes = (cs): t =>
     from_bytes(Bytes.init(16, i => Char.chr(cs[i])), 0);
 
-  let inspect = (tile: t): string => {
+  let inspect = (tile: t, format: int => string): string => {
     let result = ref("");
-    let format = n => n == 0 ? "." : string_of_int(n);
 
     Array.iter(
       row => {

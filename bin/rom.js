@@ -16,3 +16,5 @@ for (let i = 0; i < steps; i++) {
   console.log(Cpu.now(cpu));
   Cpu.step(cpu);
 }
+
+console.log("░")
