@@ -3,8 +3,9 @@
   "version": "0.1.4",
   "scripts": {
     "build": "bsb -make-world",
-    "start": "bsb -make-world -w",
     "clean": "bsb -clean-world",
+    "rom": "node bin/rom.js",
+    "start": "bsb -make-world -w",
     "test": "yarn run jest"
   },
   "keywords": [

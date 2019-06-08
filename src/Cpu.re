@@ -66,7 +66,7 @@ let reset = cpu => {
 };
 
 let now = cpu => {
-  Disassemble.make(cpu.memory)(cpu.pc, 1);
+  Disassemble.make(cpu.memory, cpu.pc, 1);
 };
 
 let debug_log = cpu => {

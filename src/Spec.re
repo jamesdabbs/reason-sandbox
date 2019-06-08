@@ -3,6 +3,5 @@ let rom_path = (name: string) => {
 };
 
 let rom = (name: string): Rom.t => {
-  let path = rom_path(name);
-  Node.Fs.readFileSync(path, `binary) |> Bytes.of_string |> Rom.parse(path);
+  rom_path(name) |> File.rom;
 };
