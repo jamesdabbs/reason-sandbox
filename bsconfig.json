@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "sources": [
     {
+      "dir": "bin",
+      "subdirs": true
+    },
+    {
       "dir": "src",
       "subdirs": true
     },
