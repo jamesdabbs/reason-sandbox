@@ -58,6 +58,7 @@ describe("PPU", () => {
       let return_value = Ppu.fetch(ppu, 0x2002);
       // After reading PPUSTATUS, the top bit of status (vblank) is cleared.
       expect((return_value, regs.status)) |> toEqual((131, 3));
+      // TODO: write latch reset on PPUSTATUS read.
     });
 
     test("fetching from PPUDATA returns a buffered value", () => {
@@ -85,6 +86,31 @@ describe("PPU", () => {
       let big_step = regs.ppu_address;
       expect((small_step, big_step)) |> toEqual((0x2011, 0x2031));
     });
+  });
 
+  describe("store", () => {
+    test("storing to PPUCTRL", () => {
+      let _ = Ppu.store(ppu, 0x2000, 0b10001010);
+      expect(regs.control) |> toEqual(0b10001010);
+    });
+    test("storing to PPUMASK", () => {
+      let _ = Ppu.store(ppu, 0x2001, 0b01101010);
+      expect(regs.mask) |> toEqual(0b01101010);
+    });
+    test("storing to PPUSTATUS", () => {
+      regs.status = 0;
+      let _ = Ppu.store(ppu, 0x2002, 0b11111111);
+      expect(regs.status) |> toEqual(0);
+    });
+    test("storing to OAMADDR", () => {
+      let _ = Ppu.store(ppu, 0x2003, 0b01011000);
+      expect(regs.oam_address) |> toEqual(0b01011000);
+    });
+    test("storing to OAMDATA", () => {
+      let oam_addr = regs.oam_address;
+      let _ = Ppu.store(ppu, 0x2004, 42);
+      let result = Array.get(ppu.oam, oam_addr);
+      expect((result, regs.oam_address)) |> toEqual((42, 89));
+    });
   });
 });

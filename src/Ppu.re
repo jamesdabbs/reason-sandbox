@@ -18,25 +18,9 @@ type vblank_nmi =
   | NMIEnabled
   | NMIDisabled;
 
-type sprite = {
-  x: int,
-  y: int,
-  tile: int,
-  attr: int
-};
-
-let make_sprite = (~x=0, ~y=0, ~tile=0, ~attr=0, ()) => {
-  {
-    x,
-    y,
-    tile,
-    attr
-  };
-};
-
 type t = {
   registers: registers,
-  oam: array(sprite),
+  oam: array(int),
   name_table: array(int),
   palette_table: array(int),
   pattern_table: Rom.t
@@ -59,7 +43,7 @@ let build = (rom) => {
       nt_index: 0,
       write_latch: false
     },
-    oam: Array.init(64, (_n) => make_sprite()),
+    oam: Array.make(0x100, 0),
     name_table: Array.make(0x800, 0),
     palette_table: Array.make(0x20, 0),
     pattern_table: rom
@@ -88,6 +72,8 @@ let show_background_left = mask_helper(1);
 let show_sprites_left = mask_helper(2);
 let show_background = mask_helper(3);
 let show_sprites = mask_helper(4);
+
+let nt_index = (ppu) => ppu.registers.control land 3;
 
 let read_vram = (ppu, address) => {
   if (address < 0x2000) {
@@ -119,4 +105,21 @@ let fetch = (ppu: t, address) => {
   | 7 => read_ppu_data(ppu)
   | _ => 0
   };
+};
+
+let write_oam = (ppu: t, value) => {
+  let { oam_address } = ppu.registers;
+  Array.set(ppu.oam, oam_address, value);
+  ppu.registers.oam_address = (oam_address + 1) land 0xff;
+};
+
+let store = (ppu: t, address, value) =>  {
+  switch (address land 7) {
+  | 0 => ppu.registers.control = value
+  | 1 => ppu.registers.mask = value
+  | 3 => ppu.registers.oam_address = value
+  | 4 => write_oam(ppu, value)
+  | _ => ()
+  };
+  value;
 };
