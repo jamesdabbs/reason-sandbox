@@ -125,17 +125,19 @@ describe("PPU", () => {
       // Second byte.
       Ppu.store(ppu, 0x2005, 0b11000100);
       let latch2 = regs.write_latch;
-      expect((latch1, regs.coarse_x, regs.fine_x, latch2, regs.coarse_y, regs.fine_y)) |>
-        toEqual((true, 0b00111, 0b011, false, 0b11000, 0b100));
+      let scroll = Ppu.Scroll.from_registers(regs.buffer, regs.control, regs.fine_x);
+      expect((latch1, latch2, scroll.coarse_x, scroll.fine_x, scroll.coarse_y, scroll.fine_y)) |>
+        toEqual((true, false, 0b00111, 0b011, 0b11000, 0b100));
     });
 
     test("storing to PPUADDR", () => {
       regs.write_latch = false;
-      Ppu.store(ppu, 0x2006, 0b00010000);
+      Ppu.store(ppu, 0x2006, 0b11010000);
       let latch1 = regs.write_latch;
       Ppu.store(ppu, 0x2006, 0b01010101);
       let latch2 = regs.write_latch;
-      expect((latch1, latch2, regs.ppu_address)) |>  toEqual((true, false, 0b0001000001010101));
+      let result = 0b0101000001010101
+      expect((latch1, latch2, regs.buffer, regs.ppu_address)) |>  toEqual((true, false, result, result));
     });
 
     test("writing to pattern table", () => {

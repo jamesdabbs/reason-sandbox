@@ -6,11 +6,8 @@ type registers = {
   mutable oam_data: int,
   mutable ppu_address: int,
   mutable ppu_data: int,
-  mutable coarse_x: int,
-  mutable coarse_y: int,
-  mutable fine_x: int,
-  mutable fine_y: int,
   mutable buffer: int,
+  mutable fine_x: int,
   mutable write_latch: bool
 };
 
@@ -36,11 +33,8 @@ let build = (rom) => {
       oam_data: 0,
       ppu_address: 0,
       ppu_data: 0,
-      coarse_x: 0,
-      coarse_y: 0,
-      fine_x: 0,
-      fine_y: 0,
       buffer: 0,
+      fine_x: 0,
       write_latch: false
     },
     oam: Array.make(0x100, 0),
@@ -50,17 +44,14 @@ let build = (rom) => {
   };
 };
 
-let ctrl_helper = (n, unset, set) => {
-  (regs) => {
-    Util.read_bit(regs.control, n) ? set : unset;
-  };
+let ctrl_helper = (n, unset, set, regs) => {
+  Util.read_bit(regs.control, n) ? set : unset;
 };
 
-let mask_helper = (n) => {
-  (regs) => Util.read_bit(regs.mask, n);
+let mask_helper = (n, regs) => {
+  Util.read_bit(regs.mask, n);
 };
 
-// NOTE: If we reify nt_index as a separate register, we might not wind up using the scroll offset helpers.
 let x_scroll_offset = ctrl_helper(0, 0, 256);
 let y_scroll_offset = ctrl_helper(1, 0, 240);
 let vram_step = ctrl_helper(2, 1, 32);
@@ -72,8 +63,6 @@ let show_background_left = mask_helper(1);
 let show_sprites_left = mask_helper(2);
 let show_background = mask_helper(3);
 let show_sprites = mask_helper(4);
-
-let nt_index = (ppu) => ppu.registers.control land 3;
 
 let read_vram = (ppu, address) => {
   if (address < 0x2000) {
@@ -126,15 +115,64 @@ let write_oam = (ppu: t, value) => {
   ppu.registers.oam_address = (oam_address + 1) land 0xff;
 };
 
+/*
+  See: https://wiki.nesdev.com/w/index.php/PPU_scrolling#Summary
+  The PPU has a single 15 bit address register used for all reads and writes to VRAM.
+  However, since the NES only has an 8-bit data bus, all modifications to the address
+  register must be done one byte at a time. Additionally, 2 interfaces are exposed for
+  the comfort of the application programmer:
+    1. The PPUSTATUS interface at $2005 which modifies an internal buffer register, often denoted as `t`.
+      * It does not immediately copy to the address so that it may be written to at any point during vblank.
+      * This interface makes setting the scroll position for the next frame more convenient,
+        hopefully making the structure of the address space explicit for the developer.
+    2. The PPUADDR interface at $2006 which modifies the buffer and immeediately sets the address to `t`.
+      * This address does immediately copy to the address register so the game may read or write data to VRAM.
+      * This interface makes it more straightforward to edit particular regions of VRAM.
+
+  During rendering, the current value of `t` is copied to the address register during the last vblank scanline.
+  The value of the address register is updated during rendering to reflect the current tile.
+
+  Since there are not actually separate registers for scrolling information,
+  and either `ppu_address` or the `buffer` could be viewed as the source of scrolling info,
+  we have written a module below which accepts one of these registers and interprets the bitfield
+  as described in the above documentation. It is _possible_ that we could dispense with the existence
+  of the buffer entirely and let the programmer directly write to the address register if we are
+  confident that no applications would try to interleave writes to PPUSCROLL and PPUADDR.
+  I struggle to imagine an observable scenario where the two would be out of sync otherwise.
+*/
+
+module Scroll = {
+  type t = {
+    nt_index: int,
+    coarse_x: int,
+    coarse_y: int,
+    fine_x: int,
+    fine_y: int
+  };
+
+  let from_registers = (base, control, fine_x): t => {
+    {
+      nt_index: control land 0x3,
+      coarse_x: base land 0x1f,
+      coarse_y: base lsr 5 land 0x1f,
+      fine_x: fine_x,
+      fine_y: base lsr 12
+    };
+  };
+};
+
 let write_scroll = (ppu: t, value) => {
   let { registers as regs } = ppu;
   if (regs.write_latch) {
-    regs.coarse_y = value lsr 3;
-    regs.fine_y = value land 7;
+    let coarse_y_bits = (value lsr 3) lsl 5;
+    let fine_y_bits = (value land 7) lsl 12;
+    regs.buffer = regs.buffer lor coarse_y_bits lor fine_y_bits;
     regs.write_latch = false;
   } else {
-    regs.coarse_x = value lsr 3;
-    regs.fine_x = value land 7;
+    let coarse_x_bits = value lsr 3;
+    let fine_x_bits = value land 7;
+    regs.buffer = coarse_x_bits;
+    regs.fine_x = fine_x_bits;
     regs.write_latch = true;
   };
 };
@@ -142,10 +180,11 @@ let write_scroll = (ppu: t, value) => {
 let write_address = (ppu: t, value) => {
   let { registers as regs } = ppu;
   if (regs.write_latch) {
-    regs.ppu_address = registers.buffer lor value;
+    regs.buffer = registers.buffer lor value;
+    regs.ppu_address = regs.buffer;
     regs.write_latch = false;
   } else {
-    registers.buffer = value lsl 8;
+    registers.buffer = value lsl 8 land 0x7fff;
     regs.write_latch = true;
   };
 };
