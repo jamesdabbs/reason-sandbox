@@ -85,6 +85,18 @@ let read_vram = (ppu, address) => {
   };
 };
 
+let write_vram = (ppu, value) => {
+  let address = ppu.registers.ppu_address;
+  if (address < 0x2000) {
+    Bytes.set(ppu.pattern_table.chr, address, Char.chr(value));
+  } else if (address < 0x3f00) {
+    Array.set(ppu.name_table, address land 0x7ff, value);
+  } else {
+    Array.set(ppu.palette_table, address land 0x1f, value);
+  };
+  ppu.registers.ppu_address = address + vram_step(ppu.registers);
+};
+
 let read_status = (ppu) => {
   let result = ppu.registers.status;
   ppu.registers.status = result land 0x7f;
@@ -146,6 +158,7 @@ let store = (ppu: t, address, value) =>  {
   | 4 => write_oam(ppu, value);
   | 5 => write_scroll(ppu, value);
   | 6 => write_address(ppu, value);
+  | 7 => write_vram(ppu, value);
   | _ => ();
   };
 };

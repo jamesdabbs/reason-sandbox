@@ -137,5 +137,26 @@ describe("PPU", () => {
       let latch2 = regs.write_latch;
       expect((latch1, latch2, regs.ppu_address)) |>  toEqual((true, false, 0b0001000001010101));
     });
+
+    test("writing to pattern table", () => {
+      regs.ppu_address = 0x20;
+      Ppu.store(ppu, 0x2007, 13);
+      let result = Ppu.read_vram(ppu, 0x20);
+      expect((result, regs.ppu_address)) |> toEqual((13, 0x21));
+    });
+
+    test("writing to nametable", () => {
+      regs.ppu_address = 0x2030;
+      regs.control = 4;
+      Ppu.store(ppu, 0x2007, 17);
+      let result = Ppu.read_vram(ppu, 0x2030);
+      expect((result, regs.ppu_address)) |> toEqual((17, 0x2050));
+    });
+
+    test("writing to palette table", () => {
+      regs.ppu_address = 0x3f10;
+      Ppu.store(ppu, 0x2007, 19);
+      expect(Ppu.read_vram(ppu, 0x3f10)) |> toEqual(19);
+    });
   });
 });
