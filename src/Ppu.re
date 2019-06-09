@@ -10,7 +10,7 @@ type registers = {
   mutable coarse_y: int,
   mutable fine_x: int,
   mutable fine_y: int,
-  mutable nt_index: int,
+  mutable buffer: int,
   mutable write_latch: bool
 };
 
@@ -40,7 +40,7 @@ let build = (rom) => {
       coarse_y: 0,
       fine_x: 0,
       fine_y: 0,
-      nt_index: 0,
+      buffer: 0,
       write_latch: false
     },
     oam: Array.make(0x100, 0),
@@ -88,6 +88,7 @@ let read_vram = (ppu, address) => {
 let read_status = (ppu) => {
   let result = ppu.registers.status;
   ppu.registers.status = result land 0x7f;
+  ppu.registers.write_latch = false;
   result;
 };
 
@@ -113,13 +114,38 @@ let write_oam = (ppu: t, value) => {
   ppu.registers.oam_address = (oam_address + 1) land 0xff;
 };
 
+let write_scroll = (ppu: t, value) => {
+  let { registers as regs } = ppu;
+  if (regs.write_latch) {
+    regs.coarse_y = value lsr 3;
+    regs.fine_y = value land 7;
+    regs.write_latch = false;
+  } else {
+    regs.coarse_x = value lsr 3;
+    regs.fine_x = value land 7;
+    regs.write_latch = true;
+  };
+};
+
+let write_address = (ppu: t, value) => {
+  let { registers as regs } = ppu;
+  if (regs.write_latch) {
+    regs.ppu_address = registers.buffer lor value;
+    regs.write_latch = false;
+  } else {
+    registers.buffer = value lsl 8;
+    regs.write_latch = true;
+  };
+};
+
 let store = (ppu: t, address, value) =>  {
   switch (address land 7) {
-  | 0 => ppu.registers.control = value
-  | 1 => ppu.registers.mask = value
-  | 3 => ppu.registers.oam_address = value
-  | 4 => write_oam(ppu, value)
-  | _ => ()
+  | 0 => ppu.registers.control = value;
+  | 1 => ppu.registers.mask = value;
+  | 3 => ppu.registers.oam_address = value;
+  | 4 => write_oam(ppu, value);
+  | 5 => write_scroll(ppu, value);
+  | 6 => write_address(ppu, value);
+  | _ => ();
   };
-  value;
 };
