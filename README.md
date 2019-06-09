@@ -13,3 +13,5 @@ yarn test --watchAll # run tests
 * [Addressing modes](http://www.emulator101.com/6502-addressing-modes.html)
 * [Mappers](http://tuxnes.sourceforge.net/nesmapper.txt)
 * [Graphics](https://opcode-defined.quora.com/How-NES-Graphics-Work-Pattern-tables)
+* [PPU Registers](https://wiki.nesdev.com/w/index.php/PPU_registers#Summary)
+* [PPU Scrolling](https://wiki.nesdev.com/w/index.php/PPU_scrolling#The_common_case)

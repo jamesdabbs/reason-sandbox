@@ -23,8 +23,6 @@ type t = {
   mapper,
 };
 
-type rom = t;
-
 let check_header = (rom: bytes) => {
   let header = Bytes.sub(rom, 0, 4);
 
@@ -33,7 +31,7 @@ let check_header = (rom: bytes) => {
   };
 };
 
-let parse = (path: string, contents: bytes): rom => {
+let parse = (path: string, contents: bytes): t => {
   let byte_at = index => Char.code(Bytes.get(contents, index));
   check_header(contents);
 
