@@ -117,20 +117,23 @@ let write_oam = (ppu: t, value) => {
 
 /*
   See: https://wiki.nesdev.com/w/index.php/PPU_scrolling#Summary
-  The PPU has a single 15 bit address register used for all reads and writes to VRAM.
-  However, since the NES only has an 8-bit data bus, all modifications to the address
-  register must be done one byte at a time. Additionally, 2 interfaces are exposed for
-  the comfort of the application programmer:
-    1. The PPUSTATUS interface at $2005 which modifies an internal buffer register, often denoted as `t`.
-      * It does not immediately copy to the address so that it may be written to at any point during vblank.
-      * This interface makes setting the scroll position for the next frame more convenient,
-        hopefully making the structure of the address space explicit for the developer.
-    2. The PPUADDR interface at $2006 which modifies the buffer and immeediately sets the address to `t`.
-      * This address does immediately copy to the address register so the game may read or write data to VRAM.
-      * This interface makes it more straightforward to edit particular regions of VRAM.
 
-  During rendering, the current value of `t` is copied to the address register during the last vblank scanline.
-  The value of the address register is updated during rendering to reflect the current tile.
+  The PPU has a single 15 bit address register, `v`, used for all reads and writes to VRAM.
+  However, since the NES only has an 8-bit data bus, all modifications to the address
+  register must be done one byte at a time. As a consequence, a buffer is used to modify `v`.
+
+  The 15-bit buffer register, `t`, must receive two writes before forming a completed address.
+  Two different interfaces are exposed for the comfort of the application programmer:
+
+  1. The PPUSTATUS interface at $2005 for setting the scroll position of the next frame.
+    * Each byte it receives specifies either the coarse x and fine x or coarse y and fine y coordinates.
+    * It can be written to at any point during vblank and will copy `t` to `v` just before rendering.
+  2. The PPUADDR interface at $2006 for updating the address before using PPUDATA to read/write VRAM.
+    * Each byte it receives is either the low byte or high byte for the buffer.
+    * It immediately copies `t` to `v` after the second write.
+
+  The current value of the buffer is copied to the address register during the last vblank scanline.
+  During rendering, the address register is updated by the PPU to reflect the current memory access.
 
   Since there are not actually separate registers for scrolling information,
   and either `ppu_address` or the `buffer` could be viewed as the source of scrolling info,
