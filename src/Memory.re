@@ -16,7 +16,7 @@ let copy = (memory: t): t => {
 
 let get_byte = (mem: t, loc: address): int =>
   if (loc >= 0x8000) {
-    (mem.mapper)#get(loc);
+    (mem.mapper)#get_prg(loc);
   } else {
     Char.code(Bytes.get(mem.ram, loc land 0x7ff));
   };

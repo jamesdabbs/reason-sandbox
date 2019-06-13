@@ -20,10 +20,10 @@ type t = {
   oam: array(int),
   name_table: array(int),
   palette_table: array(int),
-  pattern_table: Rom.t,
+  pattern_table: Mapper.t,
 };
 
-let build = rom => {
+let build = mapper => {
   {
     registers: {
       control: 0,
@@ -40,7 +40,7 @@ let build = rom => {
     oam: Array.make(0x100, 0),
     name_table: Array.make(0x800, 0),
     palette_table: Array.make(0x20, 0),
-    pattern_table: rom,
+    pattern_table: mapper,
   };
 };
 
@@ -66,7 +66,7 @@ let show_sprites = mask_helper(4);
 
 let read_vram = (ppu, address) =>
   if (address < 0x2000) {
-    Char.code(Bytes.get(ppu.pattern_table.chr, address));
+    (ppu.pattern_table)#get_chr(address);
   } else if (address < 0x3f00) {
     ppu.name_table[address land 0x7ff];
   } else {
@@ -76,7 +76,7 @@ let read_vram = (ppu, address) =>
 let write_vram = (ppu, value) => {
   let address = ppu.registers.ppu_address;
   if (address < 0x2000) {
-    Bytes.set(ppu.pattern_table.chr, address, Char.chr(value));
+    (ppu.pattern_table)#set_chr(address, value);
   } else if (address < 0x3f00) {
     ppu.name_table[address land 0x7ff] = value;
   } else {

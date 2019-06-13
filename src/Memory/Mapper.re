@@ -3,19 +3,28 @@ type byte = int;
 
 type t = {
   .
-  get: address => byte,
-  set: (address, byte) => unit,
+  get_prg: address => byte,
+  set_prg: (address, byte) => unit,
+  get_chr: address => byte,
+  set_chr: (address, byte) => unit,
 };
 
 exception MapperNotImplemented(Rom.mapper);
+exception NotAllowed(string);
 
 let nrom = (rom: Rom.t): t => {
   let end_of_rom = rom.prg_size - 1;
   {
-    pub get = address => {
+    pub get_prg = address => {
       Bytes.get(rom.prg, address land end_of_rom) |> Char.code;
     };
-    pub set = (_, _) => ()
+    pub set_prg = (_, _) => raise(NotAllowed("Cannot write to prg"));
+    pub get_chr = address => {
+      Bytes.get(rom.chr, address) |> Char.code;
+    };
+    pub set_chr = (address, byte) => {
+      Char.chr(byte) |> Bytes.set(rom.chr, address);
+    }
   };
 };
 
