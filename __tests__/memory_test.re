@@ -23,14 +23,6 @@ describe("Memory", () => {
     == Char.code(Bytes.get(rom.prg, 0))
   );
 
-  test("it cannot set to the cartridge", () => {
-    let old = Bytes.copy(memory.ram);
-
-    Memory.set_byte(memory, 0x8000, 13);
-
-    expect(memory.ram) == old;
-  });
-
   test("it can fetch a word", () => {
     let word = Memory.get_word(memory, 0xfffc);
 

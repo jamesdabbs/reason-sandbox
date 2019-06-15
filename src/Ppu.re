@@ -8,7 +8,7 @@ type registers = {
   mutable ppu_data: int,
   mutable buffer: int,
   mutable fine_x: int,
-  mutable write_latch: bool
+  mutable write_latch: bool,
 };
 
 type vblank_nmi =
@@ -16,14 +16,14 @@ type vblank_nmi =
   | NMIDisabled;
 
 type t = {
-  registers: registers,
+  registers,
   oam: array(int),
   name_table: array(int),
   palette_table: array(int),
-  pattern_table: Rom.t
+  pattern_table: Mapper.t,
 };
 
-let build = (rom) => {
+let build = mapper => {
   {
     registers: {
       control: 0,
@@ -35,12 +35,12 @@ let build = (rom) => {
       ppu_data: 0,
       buffer: 0,
       fine_x: 0,
-      write_latch: false
+      write_latch: false,
     },
     oam: Array.make(0x100, 0),
     name_table: Array.make(0x800, 0),
     palette_table: Array.make(0x20, 0),
-    pattern_table: rom
+    pattern_table: mapper,
   };
 };
 
@@ -64,37 +64,36 @@ let show_sprites_left = mask_helper(2);
 let show_background = mask_helper(3);
 let show_sprites = mask_helper(4);
 
-let read_vram = (ppu, address) => {
+let read_vram = (ppu, address) =>
   if (address < 0x2000) {
-    Char.code(Bytes.get(ppu.pattern_table.chr, address));
+    (ppu.pattern_table)#get_chr(address);
   } else if (address < 0x3f00) {
-    Array.get(ppu.name_table, address land 0x7ff);
+    ppu.name_table[address land 0x7ff];
   } else {
-    Array.get(ppu.palette_table, address land 0x1f);
+    ppu.palette_table[address land 0x1f];
   };
-};
 
 let write_vram = (ppu, value) => {
   let address = ppu.registers.ppu_address;
   if (address < 0x2000) {
-    Bytes.set(ppu.pattern_table.chr, address, Char.chr(value));
+    (ppu.pattern_table)#set_chr(address, value);
   } else if (address < 0x3f00) {
-    Array.set(ppu.name_table, address land 0x7ff, value);
+    ppu.name_table[address land 0x7ff] = value;
   } else {
-    Array.set(ppu.palette_table, address land 0x1f, value);
+    ppu.palette_table[address land 0x1f] = value;
   };
   ppu.registers.ppu_address = address + vram_step(ppu.registers);
 };
 
-let read_status = (ppu) => {
+let read_status = ppu => {
   let result = ppu.registers.status;
   ppu.registers.status = result land 0x7f;
   ppu.registers.write_latch = false;
   result;
 };
 
-let read_ppu_data = (ppu) => {
-  let { ppu_address as address, ppu_data as buffer } = ppu.registers;
+let read_ppu_data = ppu => {
+  let {ppu_address as address, ppu_data as buffer} = ppu.registers;
   let result = read_vram(ppu, address);
   ppu.registers.ppu_data = result;
   ppu.registers.ppu_address = address + vram_step(ppu.registers);
@@ -110,39 +109,39 @@ let fetch = (ppu: t, address) => {
 };
 
 let write_oam = (ppu: t, value) => {
-  let { oam_address } = ppu.registers;
-  Array.set(ppu.oam, oam_address, value);
+  let {oam_address} = ppu.registers;
+  ppu.oam[oam_address] = value;
   ppu.registers.oam_address = (oam_address + 1) land 0xff;
 };
 
 /*
-  See: https://wiki.nesdev.com/w/index.php/PPU_scrolling#Summary
+   See: https://wiki.nesdev.com/w/index.php/PPU_scrolling#Summary
 
-  The PPU has a single 15 bit address register, `v`, used for all reads and writes to VRAM.
-  However, since the NES only has an 8-bit data bus, all modifications to the address
-  register must be done one byte at a time. As a consequence, a buffer is used to modify `v`.
+   The PPU has a single 15 bit address register, `v`, used for all reads and writes to VRAM.
+   However, since the NES only has an 8-bit data bus, all modifications to the address
+   register must be done one byte at a time. As a consequence, a buffer is used to modify `v`.
 
-  The 15-bit buffer register, `t`, must receive two writes before forming a completed address.
-  Two different interfaces are exposed for the comfort of the application programmer:
+   The 15-bit buffer register, `t`, must receive two writes before forming a completed address.
+   Two different interfaces are exposed for the comfort of the application programmer:
 
-  1. The PPUSTATUS interface at $2005 for setting the scroll position of the next frame.
-    * Each byte it receives specifies either the coarse x and fine x or coarse y and fine y coordinates.
-    * It can be written to at any point during vblank and will copy `t` to `v` just before rendering.
-  2. The PPUADDR interface at $2006 for updating the address before using PPUDATA to read/write VRAM.
-    * Each byte it receives is either the low byte or high byte for the buffer.
-    * It immediately copies `t` to `v` after the second write.
+   1. The PPUSTATUS interface at $2005 for setting the scroll position of the next frame.
+     * Each byte it receives specifies either the coarse x and fine x or coarse y and fine y coordinates.
+     * It can be written to at any point during vblank and will copy `t` to `v` just before rendering.
+   2. The PPUADDR interface at $2006 for updating the address before using PPUDATA to read/write VRAM.
+     * Each byte it receives is either the low byte or high byte for the buffer.
+     * It immediately copies `t` to `v` after the second write.
 
-  The current value of the buffer is copied to the address register during the last vblank scanline.
-  During rendering, the address register is updated by the PPU to reflect the current memory access.
+   The current value of the buffer is copied to the address register during the last vblank scanline.
+   During rendering, the address register is updated by the PPU to reflect the current memory access.
 
-  Since there are not actually separate registers for scrolling information,
-  and either `ppu_address` or the `buffer` could be viewed as the source of scrolling info,
-  we have written a module below which accepts one of these registers and interprets the bitfield
-  as described in the above documentation. It is _possible_ that we could dispense with the existence
-  of the buffer entirely and let the programmer directly write to the address register if we are
-  confident that no applications would try to interleave writes to PPUSCROLL and PPUADDR.
-  I struggle to imagine an observable scenario where the two would be out of sync otherwise.
-*/
+   Since there are not actually separate registers for scrolling information,
+   and either `ppu_address` or the `buffer` could be viewed as the source of scrolling info,
+   we have written a module below which accepts one of these registers and interprets the bitfield
+   as described in the above documentation. It is _possible_ that we could dispense with the existence
+   of the buffer entirely and let the programmer directly write to the address register if we are
+   confident that no applications would try to interleave writes to PPUSCROLL and PPUADDR.
+   I struggle to imagine an observable scenario where the two would be out of sync otherwise.
+ */
 
 module Scroll = {
   type t = {
@@ -150,7 +149,7 @@ module Scroll = {
     coarse_x: int,
     coarse_y: int,
     fine_x: int,
-    fine_y: int
+    fine_y: int,
   };
 
   let from_registers = (base, control, fine_x): t => {
@@ -158,14 +157,14 @@ module Scroll = {
       nt_index: control land 0x3,
       coarse_x: base land 0x1f,
       coarse_y: base lsr 5 land 0x1f,
-      fine_x: fine_x,
-      fine_y: base lsr 12
+      fine_x,
+      fine_y: base lsr 12,
     };
   };
 };
 
 let write_scroll = (ppu: t, value) => {
-  let { registers as regs } = ppu;
+  let {registers as regs} = ppu;
   if (regs.write_latch) {
     let coarse_y_bits = (value lsr 3) lsl 5;
     let fine_y_bits = (value land 7) lsl 12;
@@ -181,7 +180,7 @@ let write_scroll = (ppu: t, value) => {
 };
 
 let write_address = (ppu: t, value) => {
-  let { registers as regs } = ppu;
+  let {registers as regs} = ppu;
   if (regs.write_latch) {
     regs.buffer = registers.buffer lor value;
     regs.ppu_address = regs.buffer;
@@ -192,15 +191,15 @@ let write_address = (ppu: t, value) => {
   };
 };
 
-let store = (ppu: t, address, value) =>  {
+let store = (ppu: t, address, value) => {
   switch (address land 7) {
-  | 0 => ppu.registers.control = value;
-  | 1 => ppu.registers.mask = value;
-  | 3 => ppu.registers.oam_address = value;
-  | 4 => write_oam(ppu, value);
-  | 5 => write_scroll(ppu, value);
-  | 6 => write_address(ppu, value);
-  | 7 => write_vram(ppu, value);
-  | _ => ();
+  | 0 => ppu.registers.control = value
+  | 1 => ppu.registers.mask = value
+  | 3 => ppu.registers.oam_address = value
+  | 4 => write_oam(ppu, value)
+  | 5 => write_scroll(ppu, value)
+  | 6 => write_address(ppu, value)
+  | 7 => write_vram(ppu, value)
+  | _ => ()
   };
 };
