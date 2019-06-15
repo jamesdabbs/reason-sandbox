@@ -5,7 +5,7 @@ open Expect;
 describe("Mappers", () => {
   let make = (mapper, prg_count, chr_count): Mapper.t => {
     let prg_size = prg_count * 0x4000;
-    let chr_size = chr_count * 0x4000;
+    let chr_size = chr_count * 0x2000;
 
     Mapper.for_rom({
       pathname: "memrom",
