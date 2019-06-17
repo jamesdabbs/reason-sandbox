@@ -52,6 +52,10 @@ let mask_helper = (n, regs) => {
   Util.read_bit(regs.mask, n);
 };
 
+let status_helper = (n, regs, to_) => {
+  regs.status = Util.set_bit(regs.status, n, to_);
+};
+
 let x_scroll_offset = ctrl_helper(0, 0, 256);
 let y_scroll_offset = ctrl_helper(1, 0, 240);
 let vram_step = ctrl_helper(2, 1, 32);
@@ -63,6 +67,9 @@ let show_background_left = mask_helper(1);
 let show_sprites_left = mask_helper(2);
 let show_background = mask_helper(3);
 let show_sprites = mask_helper(4);
+
+let set_sprite_zero_hit = status_helper(6);
+let set_vblank = status_helper(7);
 
 let read_vram = (ppu, address) =>
   if (address < 0x2000) {
@@ -164,7 +171,7 @@ module Scroll = {
 };
 
 let write_scroll = (ppu: t, value) => {
-  let {registers as regs} = ppu;
+  let regs = ppu.registers;
   if (regs.write_latch) {
     let coarse_y_bits = (value lsr 3) lsl 5;
     let fine_y_bits = (value land 7) lsl 12;

@@ -4,26 +4,44 @@ type byte = int;
 type t = {
   ram: bytes,
   mapper: Mapper.t,
+  ppu: Ppu.t,
 };
 
 let build = (rom: Rom.t): t => {
-  {ram: Bytes.make(0x800, Char.chr(0)), mapper: Mapper.for_rom(rom)};
+  let ram = Bytes.make(0x800, Char.chr(0));
+  let mapper = Mapper.for_rom(rom);
+  let ppu = Ppu.build(mapper);
+
+  {ram, mapper, ppu};
 };
+
+let ppu = memory => memory.ppu;
 
 let copy = (memory: t): t => {
   {...memory, ram: Bytes.copy(memory.ram)};
 };
 
 let get_byte = (mem: t, loc: address): int =>
-  if (loc >= 0x8000) {
-    (mem.mapper)#get_prg(loc);
-  } else {
+  if (loc < 0x2000) {
     Char.code(Bytes.get(mem.ram, loc land 0x7ff));
+  } else if (loc < 0x4000) {
+    Ppu.fetch(mem.ppu, loc);
+  } else if (loc < 0x8000) {
+    0;
+    // TODO: APU, I/O and such
+  } else {
+    (mem.mapper)#get_prg(loc);
   };
 
 let set_byte = (mem: t, loc: address, value: byte) =>
-  if (loc <= 0x2000) {
+  if (loc < 0x2000) {
     Bytes.set(mem.ram, loc, Char.chr(value));
+  } else if (loc < 0x4000) {
+    Ppu.store(mem.ppu, loc, value);
+  } else if (loc < 0x8000) {
+    ();
+  } else {
+    (mem.mapper)#set_prg(loc, value);
   };
 
 let get_word = (mem: t, loc: address) => {
